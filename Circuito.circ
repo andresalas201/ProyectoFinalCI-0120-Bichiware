@@ -74,13 +74,13 @@
       <a name="label" val="Destino"/>
       <a name="width" val="5"/>
     </comp>
-    <comp lib="0" loc="(3050,340)" name="Constant">
-      <a name="value" val="0xd"/>
-      <a name="width" val="5"/>
-    </comp>
     <comp lib="0" loc="(3050,470)" name="Tunnel">
       <a name="label" val="WriteData"/>
       <a name="width" val="32"/>
+    </comp>
+    <comp lib="0" loc="(3110,340)" name="Constant">
+      <a name="value" val="0xd"/>
+      <a name="width" val="5"/>
     </comp>
     <comp lib="0" loc="(3570,330)" name="Tunnel">
       <a name="label" val="Write"/>
@@ -311,11 +311,20 @@
     <comp lib="8" loc="(2517,707)" name="Text">
       <a name="text" val="Dependiendo de la instruccion, algo diferente tiene que salir"/>
     </comp>
+    <comp lib="8" loc="(2992,369)" name="Text">
+      <a name="text" val="Registro al que se escribira"/>
+    </comp>
+    <comp lib="8" loc="(3088,438)" name="Text">
+      <a name="text" val="Datos a escribir en registro"/>
+    </comp>
     <comp lib="8" loc="(3241,50)" name="Text">
       <a name="text" val="Este decoder nos dice si una instruccion escribe en registro"/>
     </comp>
     <comp lib="8" loc="(333,336)" name="Text">
       <a name="text" val="La rom es temporal, deberia ser una ram"/>
+    </comp>
+    <comp lib="8" loc="(3540,381)" name="Text">
+      <a name="text" val="Decide si debe escribirse algo en registro"/>
     </comp>
     <comp lib="8" loc="(3758,139)" name="Text">
       <a name="text" val="Puede que haya leido mal, entonces dejo el decoder aqui"/>
@@ -436,10 +445,9 @@
     <wire from="(2900,470)" to="(3050,470)"/>
     <wire from="(2980,110)" to="(2980,180)"/>
     <wire from="(2980,110)" to="(3060,110)"/>
-    <wire from="(2980,180)" to="(3040,180)"/>
-    <wire from="(3040,180)" to="(3040,320)"/>
-    <wire from="(3040,320)" to="(3160,320)"/>
-    <wire from="(3050,340)" to="(3160,340)"/>
+    <wire from="(2980,180)" to="(3050,180)"/>
+    <wire from="(3050,180)" to="(3050,320)"/>
+    <wire from="(3050,320)" to="(3160,320)"/>
     <wire from="(3060,130)" to="(3060,280)"/>
     <wire from="(3060,280)" to="(3440,280)"/>
     <wire from="(3070,130)" to="(3070,270)"/>
@@ -452,6 +460,7 @@
     <wire from="(3100,240)" to="(3440,240)"/>
     <wire from="(3110,130)" to="(3110,230)"/>
     <wire from="(3110,230)" to="(3440,230)"/>
+    <wire from="(3110,340)" to="(3160,340)"/>
     <wire from="(3120,130)" to="(3120,220)"/>
     <wire from="(3120,220)" to="(3440,220)"/>
     <wire from="(3130,130)" to="(3130,210)"/>
