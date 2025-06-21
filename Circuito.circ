@@ -1263,11 +1263,13 @@ ARCHITECTURE TypeArchitecture OF Translator IS&#13;
                 IF funct3 = "000" and funct7 = "0000000" THEN
                 	TranslatedC &lt;= "00000"; 
                 END IF;
-            WHEN OTHERS
+            WHEN OTHERS =&gt;
             	TranslatedC &lt;= "11111";
         END CASE;
     END PROCESS;
 &#13;
 END TypeArchitecture;&#13;
+
+
 </vhdl>
 </project>
