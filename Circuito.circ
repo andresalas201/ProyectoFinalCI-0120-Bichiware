@@ -1233,4 +1233,41 @@ BEGIN
     END PROCESS;
 
 END TypeArchitecture;</vhdl>
+  <vhdl name="Translator">LIBRARY ieee;&#13;
+USE ieee.std_logic_1164.all;&#13;
+&#13;
+ENTITY Translator IS&#13;
+  PORT (&#13;
+  ------------------------------------------------------------------------------&#13;
+  --Insert input ports below&#13;
+    opCode    	: IN  std_logic_vector(6 DOWNTO 0); -- Op Code que describe el tipo de instruccion
+    funct3     	: IN  std_logic_vector(2 DOWNTO 0); -- funct3 que describe la instruccion especifica
+    funct7     	: IN  std_logic_vector(6 DOWNTO 0); -- funct7 que describe la instruccion especifica (solo en R-Type)
+  ------------------------------------------------------------------------------&#13;
+  --Insert output ports below&#13;
+    TranslatedC	: OUT std_logic_vector(4 DOWNTO 0)  -- Codigo traducido
+    );&#13;
+END Translator;&#13;
+&#13;
+--------------------------------------------------------------------------------&#13;
+--Complete your VHDL description below&#13;
+--------------------------------------------------------------------------------&#13;
+&#13;
+ARCHITECTURE TypeArchitecture OF Translator IS&#13;
+&#13;
+&#13;BEGIN
+    PROCESS(opCode, funct3, funct7)
+    BEGIN
+        CASE opCode IS
+            WHEN "0110011" =&gt; -- R-Type
+                IF funct3 = "000" and funct7 = "0000000" THEN
+                	TranslatedC &lt;= "00000"; 
+                END IF;
+            WHEN OTHERS
+            	TranslatedC &lt;= "11111";
+        END CASE;
+    END PROCESS;
+&#13;
+END TypeArchitecture;&#13;
+</vhdl>
 </project>
