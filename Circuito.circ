@@ -502,16 +502,16 @@
     <comp lib="8" loc="(4275,915)" name="Text">
       <a name="text" val="Datos a escribir en registro"/>
     </comp>
-    <comp lib="8" loc="(4542,563)" name="Text">
+    <comp lib="8" loc="(4540,560)" name="Text">
       <a name="text" val="Este decoder nos dice si una instruccion escribe en registro"/>
     </comp>
     <comp lib="8" loc="(4720,880)" name="Text">
       <a name="text" val="Decide si debe escribirse algo en registro"/>
     </comp>
-    <comp lib="8" loc="(5086,600)" name="Text">
+    <comp lib="8" loc="(5085,600)" name="Text">
       <a name="text" val="Puede que haya leido mal, entonces dejo el decoder aqui"/>
     </comp>
-    <comp lib="8" loc="(5179,564)" name="Text">
+    <comp lib="8" loc="(5175,560)" name="Text">
       <a name="text" val="Viendo las instrucciones, parece que solo el SW (13 / 0d) no escribe en un registro"/>
     </comp>
     <comp loc="(1880,680)" name="Translator">
@@ -1606,7 +1606,19 @@ BEGIN
 
             WHEN "01000" =&gt; -- XORI
                 result &lt;= op1 XOR imm;
-            
+		  WHEN "01110" =&gt; -- BEQ
+		      IF op1 = op2 THEN
+		          result &lt;= std_logic_vector(to_signed(1, 32));
+		      ELSE
+		          result &lt;= std_logic_vector(to_signed(0, 32));
+		      END IF;
+		
+		  WHEN "01111" =&gt; -- BNE
+		      IF op1 /= op2 THEN
+		          result &lt;= std_logic_vector(to_signed(1, 32));
+		      ELSE
+		          result &lt;= std_logic_vector(to_signed(0, 32));
+		      END IF;
             WHEN OTHERS =&gt;
                 result &lt;= (OTHERS =&gt; '0');
         END CASE;
