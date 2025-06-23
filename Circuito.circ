@@ -147,11 +147,14 @@
     <comp lib="0" loc="(1610,1430)" name="Tunnel">
       <a name="label" val="stop_cache_D"/>
     </comp>
-    <comp lib="0" loc="(1620,1460)" name="Tunnel">
-      <a name="label" val="exception"/>
-    </comp>
     <comp lib="0" loc="(1660,1380)" name="Ground">
       <a name="width" val="5"/>
+    </comp>
+    <comp lib="0" loc="(1670,1460)" name="Tunnel">
+      <a name="label" val="exception"/>
+    </comp>
+    <comp lib="0" loc="(1670,1490)" name="Tunnel">
+      <a name="label" val="branch_taken"/>
     </comp>
     <comp lib="0" loc="(1710,710)" name="Constant">
       <a name="value" val="0x0"/>
@@ -631,12 +634,15 @@
       <a name="fanout" val="1"/>
       <a name="incoming" val="32"/>
     </comp>
+    <comp lib="0" loc="(2810,1320)" name="Tunnel">
+      <a name="label" val="exception"/>
+    </comp>
+    <comp lib="0" loc="(2810,1350)" name="Tunnel">
+      <a name="label" val="branch_taken"/>
+    </comp>
     <comp lib="0" loc="(2810,950)" name="Constant">
       <a name="value" val="0x0"/>
       <a name="width" val="18"/>
-    </comp>
-    <comp lib="0" loc="(2820,1340)" name="Tunnel">
-      <a name="label" val="exception"/>
     </comp>
     <comp lib="0" loc="(2830,930)" name="Splitter">
       <a name="bit1" val="0"/>
@@ -872,6 +878,10 @@
     <comp lib="1" loc="(1570,1430)" name="NOT Gate">
       <a name="facing" val="west"/>
     </comp>
+    <comp lib="1" loc="(1610,1480)" name="OR Gate">
+      <a name="facing" val="west"/>
+      <a name="size" val="30"/>
+    </comp>
     <comp lib="1" loc="(1920,1250)" name="AND Gate"/>
     <comp lib="1" loc="(1920,1330)" name="AND Gate"/>
     <comp lib="1" loc="(1970,700)" name="NOT Gate"/>
@@ -882,6 +892,10 @@
     <comp lib="1" loc="(2220,1310)" name="AND Gate"/>
     <comp lib="1" loc="(2620,1470)" name="NOT Gate">
       <a name="facing" val="west"/>
+    </comp>
+    <comp lib="1" loc="(2750,1340)" name="OR Gate">
+      <a name="facing" val="west"/>
+      <a name="size" val="30"/>
     </comp>
     <comp lib="1" loc="(300,1490)" name="OR Gate"/>
     <comp lib="1" loc="(4020,1560)" name="NOT Gate">
@@ -1273,8 +1287,8 @@
     <wire from="(1480,1630)" to="(1500,1630)"/>
     <wire from="(150,1300)" to="(150,1320)"/>
     <wire from="(150,1300)" to="(220,1300)"/>
-    <wire from="(1500,1110)" to="(1500,1460)"/>
-    <wire from="(1500,1460)" to="(1620,1460)"/>
+    <wire from="(1500,1110)" to="(1500,1480)"/>
+    <wire from="(1500,1480)" to="(1610,1480)"/>
     <wire from="(1530,1050)" to="(1550,1050)"/>
     <wire from="(1550,1050)" to="(1550,1590)"/>
     <wire from="(1550,1050)" to="(1570,1050)"/>
@@ -1308,6 +1322,8 @@
     <wire from="(1640,1320)" to="(1640,1360)"/>
     <wire from="(1640,1320)" to="(1750,1320)"/>
     <wire from="(1640,1360)" to="(1680,1360)"/>
+    <wire from="(1640,1470)" to="(1660,1470)"/>
+    <wire from="(1640,1490)" to="(1670,1490)"/>
     <wire from="(1640,860)" to="(1640,1240)"/>
     <wire from="(1640,860)" to="(2680,860)"/>
     <wire from="(1650,690)" to="(1650,780)"/>
@@ -1321,6 +1337,8 @@
     <wire from="(1660,1280)" to="(2040,1280)"/>
     <wire from="(1660,1300)" to="(1750,1300)"/>
     <wire from="(1660,1380)" to="(1680,1380)"/>
+    <wire from="(1660,1460)" to="(1660,1470)"/>
+    <wire from="(1660,1460)" to="(1670,1460)"/>
     <wire from="(1660,1610)" to="(1660,1850)"/>
     <wire from="(1660,1610)" to="(2590,1610)"/>
     <wire from="(1660,1850)" to="(1750,1850)"/>
@@ -1560,7 +1578,7 @@
     <wire from="(2610,890)" to="(2620,890)"/>
     <wire from="(2640,1080)" to="(2640,1090)"/>
     <wire from="(2640,1330)" to="(2640,1340)"/>
-    <wire from="(2640,1340)" to="(2820,1340)"/>
+    <wire from="(2640,1340)" to="(2750,1340)"/>
     <wire from="(2650,1470)" to="(2660,1470)"/>
     <wire from="(2660,130)" to="(3000,130)"/>
     <wire from="(2660,240)" to="(3020,240)"/>
@@ -1587,8 +1605,12 @@
     <wire from="(2720,700)" to="(2720,860)"/>
     <wire from="(2720,700)" to="(3060,700)"/>
     <wire from="(2720,860)" to="(2730,860)"/>
+    <wire from="(2780,1330)" to="(2800,1330)"/>
+    <wire from="(2780,1350)" to="(2810,1350)"/>
     <wire from="(2790,880)" to="(2790,940)"/>
     <wire from="(2790,940)" to="(2810,940)"/>
+    <wire from="(2800,1320)" to="(2800,1330)"/>
+    <wire from="(2800,1320)" to="(2810,1320)"/>
     <wire from="(2830,930)" to="(2940,930)"/>
     <wire from="(2870,580)" to="(2870,660)"/>
     <wire from="(2870,580)" to="(3060,580)"/>
@@ -3022,84 +3044,75 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity branch_jump is
     port (
-        opcode        : in  std_logic_vector(4 downto 0);   -- Opcode (14=beq, 15=bne, 16=jal, 17=jalr)
-        op1           : in  std_logic_vector(31 downto 0);  -- Data from rs1 (used by beq/bne)
-        op2           : in  std_logic_vector(31 downto 0);  -- Data from rs2 (used by beq/bne)
-        branch_offset : in  std_logic_vector(12 downto 0);  -- Offset for branches (signed, 13-bit)
-        jump_offset   : in  std_logic_vector(20 downto 0);  -- Offset for jumps (signed, 21-bit)
-        jalr_rs1      : in  std_logic_vector(31 downto 0);  -- Base register for JALR
-        jalr_offset   : in  std_logic_vector(11 downto 0);  -- Offset for JALR (signed, 12-bit)
-        current_pc    : in  std_logic_vector(13 downto 0);  -- Current PC (14-bit)
-        rd_write_en   : out std_logic;                      -- Enable write to rd
-        rd_data       : out std_logic_vector(31 downto 0);  -- Data to write to rd
-        next_pc       : out std_logic_vector(13 downto 0);  -- Next PC value
-        branch_taken  : out std_logic                       -- Indicates if branch/jump taken
+        opcode        : in  std_logic_vector(4 downto 0);
+        op1           : in  std_logic_vector(31 downto 0);
+        op2           : in  std_logic_vector(31 downto 0);
+        branch_offset : in  std_logic_vector(12 downto 0);
+        jump_offset   : in  std_logic_vector(20 downto 0);
+        jalr_rs1      : in  std_logic_vector(31 downto 0);
+        jalr_offset   : in  std_logic_vector(11 downto 0); 
+        current_pc    : in  std_logic_vector(13 downto 0); 
+        rd_write_en   : out std_logic;                      
+        rd_data       : out std_logic_vector(31 downto 0); 
+        next_pc       : out std_logic_vector(13 downto 0);  
+        branch_taken  : out std_logic                       
     );
 end branch_jump;
 
 architecture Behavioral of branch_jump is
-    -- Opcode constants
-    constant OP_BEQ  : std_logic_vector(4 downto 0) := "01110"; -- 14
-    constant OP_BNE  : std_logic_vector(4 downto 0) := "01111"; -- 15
-    constant OP_JAL  : std_logic_vector(4 downto 0) := "10000"; -- 16
-    constant OP_JALR : std_logic_vector(4 downto 0) := "10001"; -- 17
 
-    -- Internal signals
+    constant OP_BEQ  : std_logic_vector(4 downto 0) := "01110";
+    constant OP_BNE  : std_logic_vector(4 downto 0) := "01111";
+    constant OP_JAL  : std_logic_vector(4 downto 0) := "10000";
+    constant OP_JALR : std_logic_vector(4 downto 0) := "10001";
+
+
     signal is_beq, is_bne, is_jal, is_jalr : std_logic;
     signal branch_eq, take_branch          : std_logic;
-    signal branch_off_ext : std_logic_vector(13 downto 0); -- Extended 13-bit branch offset
-    signal jump_off_ext   : std_logic_vector(13 downto 0); -- Truncated extended 21-bit jump offset
-    signal jalr_off_ext   : std_logic_vector(13 downto 0); -- Extended 12-bit JALR offset
+    signal branch_off_ext : std_logic_vector(13 downto 0); 
+    signal jump_off_ext   : std_logic_vector(13 downto 0); 
+    signal jalr_off_ext   : std_logic_vector(13 downto 0); 
     signal pc_plus_one    : std_logic_vector(13 downto 0);
 begin
 
-    -- Opcode decoding
     is_beq  &lt;= '1' when opcode = OP_BEQ  else '0';
     is_bne  &lt;= '1' when opcode = OP_BNE  else '0';
     is_jal  &lt;= '1' when opcode = OP_JAL  else '0';
     is_jalr &lt;= '1' when opcode = OP_JALR else '0';
 
-    -- Branch condition
     branch_eq &lt;= '1' when op1 = op2 else '0';
     take_branch &lt;= (is_beq and branch_eq) or (is_bne and (not branch_eq));
 
-    -- Sign-extend offsets
     branch_off_ext &lt;= std_logic_vector(resize(signed(branch_offset), 14));
     jump_off_ext   &lt;= std_logic_vector(resize(signed(jump_offset), 14));
     jalr_off_ext   &lt;= std_logic_vector(resize(signed(jalr_offset), 14));
 
-    -- PC + 1
     pc_plus_one &lt;= std_logic_vector(unsigned(current_pc) + 1);
 
-    -- Main logic
     process(opcode, op1, op2, branch_off_ext, jump_off_ext, jalr_off_ext,
             current_pc, take_branch, is_jal, is_jalr, pc_plus_one, jalr_rs1)
-        variable jalr_target : unsigned(31 downto 0); -- para jalr
+        variable jalr_target : unsigned(31 downto 0);
     begin
-        -- Default values
         rd_write_en &lt;= '0';
         rd_data &lt;= (others =&gt; '0');
         next_pc &lt;= pc_plus_one;
         branch_taken &lt;= '0';
 
         if take_branch = '1' then
-            -- Branch taken (BEQ or BNE)
             next_pc &lt;= std_logic_vector(unsigned(current_pc) + unsigned(branch_off_ext));
             branch_taken &lt;= '1';
 
         elsif is_jal = '1' then
-            -- Jump and link
             rd_write_en &lt;= '1';
             rd_data &lt;= std_logic_vector(resize(unsigned(pc_plus_one), 32));
             next_pc &lt;= std_logic_vector(unsigned(current_pc) + unsigned(jump_off_ext));
             branch_taken &lt;= '1';
 
         elsif is_jalr = '1' then
-            -- Jump and link register
             rd_write_en &lt;= '1';
             rd_data &lt;= std_logic_vector(resize(unsigned(pc_plus_one), 32));
             jalr_target := unsigned(jalr_rs1) + unsigned(jalr_off_ext);
-            next_pc &lt;= std_logic_vector(jalr_target(13 downto 0)); -- truncamos a 14 bits
+            next_pc &lt;= std_logic_vector(jalr_target(13 downto 0));
             branch_taken &lt;= '1';
         end if;
     end process;
