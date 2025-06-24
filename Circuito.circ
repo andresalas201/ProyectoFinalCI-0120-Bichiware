@@ -1186,10 +1186,12 @@
     </comp>
     <comp lib="4" loc="(4020,1260)" name="Register">
       <a name="appearance" val="logisim_evolution"/>
+      <a name="label" val="return_address1"/>
       <a name="width" val="32"/>
     </comp>
     <comp lib="4" loc="(4020,1440)" name="Register">
       <a name="appearance" val="logisim_evolution"/>
+      <a name="label" val="can_write_ra1"/>
       <a name="width" val="1"/>
     </comp>
     <comp lib="4" loc="(4020,750)" name="Register">
@@ -1288,7 +1290,7 @@
     <comp lib="8" loc="(4785,1055)" name="Text">
       <a name="text" val="Datos a escribir en registro"/>
     </comp>
-    <comp lib="8" loc="(5137,1088)" name="Text">
+    <comp lib="8" loc="(5135,1085)" name="Text">
       <a name="text" val="Decide si debe escribirse algo en registro"/>
     </comp>
     <comp lib="8" loc="(825,505)" name="Text">
@@ -3218,75 +3220,107 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity branch_jump is
     port (
-        opcode        : in  std_logic_vector(4 downto 0);
-        op1           : in  std_logic_vector(31 downto 0);
-        op2           : in  std_logic_vector(31 downto 0);
-        branch_offset : in  std_logic_vector(12 downto 0);
-        jump_offset   : in  std_logic_vector(20 downto 0);
-        jalr_rs1      : in  std_logic_vector(31 downto 0);
-        jalr_offset   : in  std_logic_vector(11 downto 0); 
-        current_pc    : in  std_logic_vector(13 downto 0); 
-        rd_write_en   : out std_logic;                      
-        rd_data       : out std_logic_vector(31 downto 0); 
-        next_pc       : out std_logic_vector(13 downto 0);  
-        branch_taken  : out std_logic                       
+        opcode        : in  std_logic_vector(4 downto 0); -- codigo de operacion
+        op1           : in  std_logic_vector(31 downto 0); -- operando 1 para branches
+        op2           : in  std_logic_vector(31 downto 0); -- operando 2 para branches
+        branch_offset : in  std_logic_vector(12 downto 0); -- offset para branches
+        jump_offset   : in  std_logic_vector(20 downto 0); -- offset para jal
+        jalr_rs1      : in  std_logic_vector(31 downto 0); -- valor del registro para calcular el offset de jalr
+        jalr_offset   : in  std_logic_vector(11 downto 0); -- offset para jalr
+        current_pc    : in  std_logic_vector(13 downto 0); -- PC actual
+        rd_write_en   : out std_logic;                      -- booleano para saber si se va a escribir en el registro destino de los jumps o no
+        rd_data       : out std_logic_vector(31 downto 0); -- data a escribir en el registro destino de los jumps
+        next_pc       : out std_logic_vector(13 downto 0); -- PC con el offset sumado
+        branch_taken  : out std_logic 					-- booleano para saber si se va a hacer o no el branch
     );
 end branch_jump;
 
 architecture Behavioral of branch_jump is
 
-    constant OP_BEQ  : std_logic_vector(4 downto 0) := "01110";
-    constant OP_BNE  : std_logic_vector(4 downto 0) := "01111";
-    constant OP_JAL  : std_logic_vector(4 downto 0) := "10000";
-    constant OP_JALR : std_logic_vector(4 downto 0) := "10001";
+	-- constantes definidas segun los 4 tipos de OP codes que se pueden recibir
+    constant OP_BEQ  : std_logic_vector(4 downto 0) := "01110"; -- beq
+    constant OP_BNE  : std_logic_vector(4 downto 0) := "01111"; -- bne
+    constant OP_JAL  : std_logic_vector(4 downto 0) := "10000"; -- jal
+    constant OP_JALR : std_logic_vector(4 downto 0) := "10001"; -- jalr
 
-
+    -- booleanos para identificar que operacion se esta realizando
     signal is_beq, is_bne, is_jal, is_jalr : std_logic;
+
+    -- booleanos para saber si tomar o no el branch
     signal branch_eq, take_branch          : std_logic;
+
+    -- aqui se guardan los offsets ajustados segun el numero de bits para que sea el mismo que el PC
     signal branch_off_ext : std_logic_vector(13 downto 0); 
     signal jump_off_ext   : std_logic_vector(13 downto 0); 
     signal jalr_off_ext   : std_logic_vector(13 downto 0); 
+
+    -- aqui se guarda el retorno de los jumps, que seria la instruccion siguiente del jump
     signal pc_plus_one    : std_logic_vector(13 downto 0);
+    
 begin
 
+    -- definir los booleanos de tipo de operacion segun el OP code
     is_beq  &lt;= '1' when opcode = OP_BEQ  else '0';
     is_bne  &lt;= '1' when opcode = OP_BNE  else '0';
     is_jal  &lt;= '1' when opcode = OP_JAL  else '0';
     is_jalr &lt;= '1' when opcode = OP_JALR else '0';
 
+    -- se revisa si los operandos son iguales, si lo son se activa este booleano
     branch_eq &lt;= '1' when op1 = op2 else '0';
+    
+    -- se revisa si la operacion que estamos haciendo es un branch, si lo es entonces se revisa si se cumple el beq o bne y de ser asi se activa este booleano
     take_branch &lt;= (is_beq and branch_eq) or (is_bne and (not branch_eq));
 
+    -- se toman los offsets y se ajusta su cantidad de bits
     branch_off_ext &lt;= std_logic_vector(resize(signed(branch_offset), 14));
     jump_off_ext   &lt;= std_logic_vector(resize(signed(jump_offset), 14));
     jalr_off_ext   &lt;= std_logic_vector(resize(signed(jalr_offset), 14));
 
+    -- se calcula el retorno de los jumps sumandole 1 al PC actual
     pc_plus_one &lt;= std_logic_vector(unsigned(current_pc) + 1);
 
+    -- este proceso se activa cada vez que alguna de estas variables se modifica
     process(opcode, op1, op2, branch_off_ext, jump_off_ext, jalr_off_ext,
             current_pc, take_branch, is_jal, is_jalr, pc_plus_one, jalr_rs1)
-        variable jalr_target : unsigned(31 downto 0);
+            
+        -- esta variable se usa para guardar el offset completo del jalr (offset + valor del registro)
+        variable complete_offset : unsigned(31 downto 0);
+        
     begin
+    
+    	   -- inicializar variables
         rd_write_en &lt;= '0';
         rd_data &lt;= (others =&gt; '0');
         next_pc &lt;= pc_plus_one;
         branch_taken &lt;= '0';
 
+        -- si la operacion es un branch y se sabe que si se va a hacer el branch:
         if take_branch = '1' then
+        	  -- calcular nuevo PC sumandole al actual el offset
             next_pc &lt;= std_logic_vector(unsigned(current_pc) + unsigned(branch_off_ext));
+            -- activar booleano para saber en el circuito que si se tomo el branch
             branch_taken &lt;= '1';
-
+        -- si la operacion es un jal:
         elsif is_jal = '1' then
+        	  -- se activa el booleano para saber en el circuito que se puede escribir en el registro destino
             rd_write_en &lt;= '1';
+            -- guardar en esta variable de retorno el dato a escribir en el registro destino (el retorno del jump)
             rd_data &lt;= std_logic_vector(resize(unsigned(pc_plus_one), 32));
+            -- calcular nuevo PC sumandole el offset del jal
             next_pc &lt;= std_logic_vector(unsigned(current_pc) + unsigned(jump_off_ext));
+            -- activar booleano para saber en el circuito que si se va a hacer el jump
             branch_taken &lt;= '1';
 
         elsif is_jalr = '1' then
+            -- se activa el booleano para saber en el circuito que se puede escribir en el registro destino
             rd_write_en &lt;= '1';
+            -- guardar en esta variable de retorno el dato a escribir en el registro destino (el retorno del jump)
             rd_data &lt;= std_logic_vector(resize(unsigned(pc_plus_one), 32));
-            jalr_target := unsigned(jalr_rs1) + unsigned(jalr_off_ext);
-            next_pc &lt;= std_logic_vector(jalr_target(13 downto 0));
+            -- se calcula el offset completo sumandole al offset el valor del registro
+            complete_offset := unsigned(jalr_rs1) + unsigned(jalr_off_ext);
+            -- calcular nuevo PC sumandole el offset completo del jalr
+            next_pc &lt;= std_logic_vector(complete_offset(13 downto 0));
+            -- activar booleano para saber en el circuito que si se va a hacer el jump
             branch_taken &lt;= '1';
         end if;
     end process;
