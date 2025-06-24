@@ -50,25 +50,33 @@ Se usa para stores
 
 ## B-Type
 
-No entiendo como funciona el immediato de esta, supongo que e bit 0 esta en 7 pero la verdad no estoy seguro
+Para las operaciones beq y bne
 
     0-6     OP Code
-    7-7     [11] (ni idea)
-    8-11    Inmediato (bits 4-1)
+    7-7     bit 11 del offset
+    8-11    bits 4:1 del offset
     12-14   func3
     15-19   Registro 1
     20-24   Registro 2
-    25-30   Inmediato (bits 10-5)
-    31-31   [20] (ni idea)
+    25-30   bits 10:5 del offset
+    31-31   bit 12 del offset
 
-## J-Type
+## J-Type (jal)
 
     0-6     OP Code
     7-11    Registro destino
-    12-19   Inmediato (bits 19-12)
-    20-20   [11] (ni idea)
-    21-30   Inmediato  (bits 10-1)
-    31-31   [20] (ni idea)
+    12-19   bits 19:12 del offset
+    20-20   bit 11 del offset
+    21-30   bits 10:1 del offset
+    31-31   bit 20 del offset
+
+## J-Type (jalr)
+
+    0-6     OP Code
+    7-11    Registro destino
+    12-14   func3
+    15-19   Registro 1
+    20-31   12 bits del offset
 
 
 # Instrucciones
@@ -85,3 +93,17 @@ ANDi | I
 ORi | I
 XORi | I
 
+# Documentacion externa de componentes VHDL
+
+## Componente branch_jump
+
+Este componente se usa para las operaciones beq, bne, jal y jalr. Recibe como parámetros el opcode, los dos operandos para los branches, el pc actual, los tres tipos de offset y el valor del registro para el jalr. 
+Lo primero que hace es identificar el tipo de operacion a realizar segun el opcode. 
+Si la operacion es beq o bne entonces va a tomar los dos operandos, los va a comparar segun la operacion que es y si la operacion se cumple se activa una bandera para saber si hay que tomar ese branch o no.
+Si esa bandera esta activada, se calcula el nuevo pc sumandole al pc actual el offset de branches y se retorna. Tambien se activa otra bandera para saber desde el circuito si hay que modificar el pc y se retorna esa bandera.
+Si la operacion es jal se activa una bandera para saber desde el circuito si se puede escribir en el registro destino el retorno del jump y se retorna la bandera.
+Luego se calcula el retorno del jump sumandole 1 al pc actual y se retorna ese valor. Se calcula tambien el nuevo pc sumandole al pc actual el offset de jal y se retorna ese valor. 
+Finalmente, se activa otra bandera para saber desde el circuito si hay que modificar el pc y se retorna esa bandera.
+Si la operacion es jalr se activa una bandera para saber desde el circuito si se puede escribir en el registro destino el retorno del jump y se retorna la bandera.
+Luego se calcula el retorno del jump sumandole 1 al pc actual y se retorna ese valor. Se calcula el offset completo sumandole al offset de jalr el valor del registro para el jalr.
+Se calcula el nuevo pc sumandole al pc actual el offset completo recien calculado y se retorna ese valor. Finalmente, se activa otra bandera para saber desde el circuito si hay que modificar el pc y se retorna esa bandera.
