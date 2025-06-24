@@ -135,7 +135,7 @@
       <a name="label" val="addr_ram_in_d"/>
       <a name="width" val="14"/>
     </comp>
-    <comp lib="0" loc="(160,1380)" name="Tunnel">
+    <comp lib="0" loc="(160,1390)" name="Tunnel">
       <a name="facing" val="east"/>
       <a name="label" val="stop_cache_D"/>
     </comp>
@@ -734,6 +734,10 @@
       <a name="label" val="store_offset"/>
       <a name="width" val="32"/>
     </comp>
+    <comp lib="0" loc="(3740,1220)" name="Ground">
+      <a name="facing" val="west"/>
+      <a name="width" val="32"/>
+    </comp>
     <comp lib="0" loc="(3760,560)" name="Tunnel">
       <a name="facing" val="east"/>
       <a name="label" val="store_write_data"/>
@@ -898,6 +902,7 @@
       <a name="size" val="30"/>
     </comp>
     <comp lib="1" loc="(300,1490)" name="OR Gate"/>
+    <comp lib="1" loc="(360,1410)" name="AND Gate"/>
     <comp lib="1" loc="(4020,1560)" name="NOT Gate">
       <a name="facing" val="west"/>
     </comp>
@@ -905,9 +910,6 @@
       <a name="facing" val="west"/>
     </comp>
     <comp lib="1" loc="(4720,930)" name="NOT Gate"/>
-    <comp lib="1" loc="(4890,810)" name="OR Gate">
-      <a name="inputs" val="15"/>
-    </comp>
     <comp lib="1" loc="(5300,810)" name="OR Gate"/>
     <comp lib="1" loc="(5570,820)" name="OR Gate"/>
     <comp lib="1" loc="(940,650)" name="AND Gate"/>
@@ -985,6 +987,7 @@
       <a name="width" val="13"/>
     </comp>
     <comp lib="3" loc="(2940,1040)" name="Comparator">
+      <a name="mode" val="unsigned"/>
       <a name="width" val="5"/>
     </comp>
     <comp lib="3" loc="(3380,820)" name="Comparator">
@@ -1188,19 +1191,19 @@
     <comp lib="8" loc="(3580,1280)" name="Text">
       <a name="text" val="Dependiendo de la instruccion, algo diferente tiene que salir"/>
     </comp>
-    <comp lib="8" loc="(4170,965)" name="Text">
+    <comp lib="8" loc="(4136,982)" name="Text">
       <a name="text" val="Registro al que se escribira"/>
     </comp>
     <comp lib="8" loc="(420,505)" name="Text">
       <a name="text" val="Cuando se activa indica que hay una syscall"/>
     </comp>
-    <comp lib="8" loc="(4275,1015)" name="Text">
-      <a name="text" val="Datos a escribir en registro"/>
-    </comp>
-    <comp lib="8" loc="(4540,660)" name="Text">
+    <comp lib="8" loc="(4667,666)" name="Text">
       <a name="text" val="Este decoder nos dice si una instruccion escribe en registro"/>
     </comp>
-    <comp lib="8" loc="(4720,980)" name="Text">
+    <comp lib="8" loc="(4787,1056)" name="Text">
+      <a name="text" val="Datos a escribir en registro"/>
+    </comp>
+    <comp lib="8" loc="(4816,973)" name="Text">
       <a name="text" val="Decide si debe escribirse algo en registro"/>
     </comp>
     <comp lib="8" loc="(825,505)" name="Text">
@@ -1215,7 +1218,9 @@
     <comp loc="(1880,780)" name="Translator">
       <a name="appearance" val="logisim_evolution"/>
     </comp>
-    <comp loc="(1930,1020)" name="Registros"/>
+    <comp loc="(1930,1020)" name="Registros">
+      <a name="label" val="Registers"/>
+    </comp>
     <comp loc="(3280,560)" name="branch_jump">
       <a name="appearance" val="logisim_evolution"/>
     </comp>
@@ -1312,7 +1317,7 @@
     <wire from="(1590,780)" to="(1590,990)"/>
     <wire from="(1590,780)" to="(1650,780)"/>
     <wire from="(160,1350)" to="(170,1350)"/>
-    <wire from="(160,1380)" to="(230,1380)"/>
+    <wire from="(160,1390)" to="(230,1390)"/>
     <wire from="(160,1560)" to="(340,1560)"/>
     <wire from="(1600,1430)" to="(1610,1430)"/>
     <wire from="(1630,800)" to="(1630,1010)"/>
@@ -1367,7 +1372,7 @@
     <wire from="(1790,1230)" to="(1870,1230)"/>
     <wire from="(1790,1310)" to="(1870,1310)"/>
     <wire from="(1790,700)" to="(1940,700)"/>
-    <wire from="(180,1430)" to="(350,1430)"/>
+    <wire from="(180,1430)" to="(310,1430)"/>
     <wire from="(180,1470)" to="(250,1470)"/>
     <wire from="(180,1510)" to="(250,1510)"/>
     <wire from="(1800,1270)" to="(1800,1360)"/>
@@ -1483,7 +1488,8 @@
     <wire from="(2260,1060)" to="(2530,1060)"/>
     <wire from="(2280,1170)" to="(2280,1310)"/>
     <wire from="(2280,1170)" to="(2530,1170)"/>
-    <wire from="(230,1330)" to="(230,1380)"/>
+    <wire from="(230,1330)" to="(230,1390)"/>
+    <wire from="(230,1390)" to="(310,1390)"/>
     <wire from="(230,960)" to="(230,980)"/>
     <wire from="(230,960)" to="(240,960)"/>
     <wire from="(2330,1000)" to="(2330,1020)"/>
@@ -1673,8 +1679,6 @@
     <wire from="(340,1520)" to="(340,1560)"/>
     <wire from="(340,1520)" to="(410,1520)"/>
     <wire from="(3440,690)" to="(3520,690)"/>
-    <wire from="(350,1430)" to="(350,1480)"/>
-    <wire from="(350,1480)" to="(410,1480)"/>
     <wire from="(3500,710)" to="(3500,770)"/>
     <wire from="(3500,710)" to="(3520,710)"/>
     <wire from="(3500,770)" to="(3980,770)"/>
@@ -1692,6 +1696,7 @@
     <wire from="(3560,1090)" to="(3560,1370)"/>
     <wire from="(3560,1090)" to="(3590,1090)"/>
     <wire from="(3580,690)" to="(3740,690)"/>
+    <wire from="(360,1410)" to="(370,1410)"/>
     <wire from="(3630,1000)" to="(3630,1010)"/>
     <wire from="(3630,1000)" to="(3780,1000)"/>
     <wire from="(3630,1010)" to="(3630,1020)"/>
@@ -1722,10 +1727,13 @@
     <wire from="(3690,670)" to="(3690,780)"/>
     <wire from="(3690,670)" to="(3740,670)"/>
     <wire from="(3690,780)" to="(4020,780)"/>
+    <wire from="(370,1410)" to="(370,1480)"/>
+    <wire from="(370,1480)" to="(410,1480)"/>
     <wire from="(3710,650)" to="(3740,650)"/>
     <wire from="(3720,620)" to="(3730,620)"/>
     <wire from="(3730,620)" to="(3730,630)"/>
     <wire from="(3730,630)" to="(3740,630)"/>
+    <wire from="(3740,1220)" to="(3780,1220)"/>
     <wire from="(3760,560)" to="(3850,560)"/>
     <wire from="(3800,1230)" to="(3800,1260)"/>
     <wire from="(3820,1070)" to="(4020,1070)"/>
@@ -1901,43 +1909,15 @@
     <wire from="(4450,780)" to="(4450,920)"/>
     <wire from="(4450,920)" to="(4450,1220)"/>
     <wire from="(4450,920)" to="(4560,920)"/>
-    <wire from="(4460,730)" to="(4460,880)"/>
-    <wire from="(4460,880)" to="(4840,880)"/>
-    <wire from="(4470,730)" to="(4470,870)"/>
-    <wire from="(4470,870)" to="(4840,870)"/>
-    <wire from="(4480,730)" to="(4480,860)"/>
-    <wire from="(4480,860)" to="(4840,860)"/>
-    <wire from="(4490,730)" to="(4490,850)"/>
-    <wire from="(4490,850)" to="(4840,850)"/>
     <wire from="(450,870)" to="(500,870)"/>
     <wire from="(4500,1230)" to="(4530,1230)"/>
-    <wire from="(4500,730)" to="(4500,840)"/>
-    <wire from="(4500,840)" to="(4840,840)"/>
-    <wire from="(4510,730)" to="(4510,830)"/>
-    <wire from="(4510,830)" to="(4840,830)"/>
     <wire from="(4510,940)" to="(4560,940)"/>
-    <wire from="(4520,730)" to="(4520,820)"/>
-    <wire from="(4520,820)" to="(4840,820)"/>
     <wire from="(4530,1100)" to="(4530,1230)"/>
-    <wire from="(4530,730)" to="(4530,810)"/>
-    <wire from="(4530,810)" to="(4840,810)"/>
-    <wire from="(4540,730)" to="(4540,800)"/>
-    <wire from="(4540,800)" to="(4840,800)"/>
     <wire from="(4550,1080)" to="(4700,1080)"/>
-    <wire from="(4550,730)" to="(4550,790)"/>
-    <wire from="(4550,790)" to="(4840,790)"/>
-    <wire from="(4560,730)" to="(4560,780)"/>
-    <wire from="(4560,780)" to="(4840,780)"/>
-    <wire from="(4570,730)" to="(4570,770)"/>
-    <wire from="(4570,770)" to="(4840,770)"/>
-    <wire from="(4580,730)" to="(4580,760)"/>
-    <wire from="(4580,760)" to="(4580,890)"/>
-    <wire from="(4580,760)" to="(4840,760)"/>
+    <wire from="(4580,730)" to="(4580,890)"/>
     <wire from="(4580,890)" to="(4900,890)"/>
     <wire from="(4590,730)" to="(4590,900)"/>
     <wire from="(4590,900)" to="(5520,900)"/>
-    <wire from="(4600,730)" to="(4600,750)"/>
-    <wire from="(4600,750)" to="(4840,750)"/>
     <wire from="(4600,930)" to="(4690,930)"/>
     <wire from="(4690,1100)" to="(4690,1290)"/>
     <wire from="(4690,1100)" to="(4700,1100)"/>
@@ -2968,69 +2948,105 @@ ARCHITECTURE TypeArchitecture OF Translator IS&#13;
     PROCESS(opCode, funct3, funct7)
     BEGIN
         CASE opCode IS
-            WHEN "0110011" =&gt; -- R-Type
-                IF funct3 = "000" and funct7 = "0000000" THEN
-                	TranslatedC &lt;= "00000"; 
-                END IF;
-                -- 	SLL
-                IF funct3 = "001" and funct7 = "0000000" THEN
-                	TranslatedC &lt;= "01001"; 
-                END IF;
-                --	SRL
-                IF funct3 = "101" and funct7 = "0000000" THEN
-                	TranslatedC &lt;= "01010"; 
-                END IF;
-                --	SRA
-                IF funct3 = "101" and funct7 = "0100000" THEN
-                	TranslatedC &lt;= "01011"; 
-                END IF;
-
-		  WHEN "1100011" =&gt; -- B-Type
-		  	 -- BEQ
-                IF funct3 = "000" and funct7 = "0000000" THEN
-                	TranslatedC &lt;= "01110"; 
-                END IF;
-                -- BNE
-                IF funct3 = "001" and funct7 = "0000000" THEN
-                	TranslatedC &lt;= "01111"; 
-                END IF;
+       	WHEN "0110011" =&gt; -- R-Type
+	       	-- ADD
+	           IF funct3 = "000" and funct7 = "0000000" THEN
+	           	TranslatedC &lt;= "00000"; 
+	           END IF;
+	           -- SUB
+	           IF funct3 = "000" and funct7 = "0100000" THEN
+	           	TranslatedC &lt;= "00001"; 
+	           END IF;
+	           -- AND
+	           IF funct3 = "010" and funct7 = "0000000" THEN
+	           	TranslatedC &lt;= "00011"; 
+	           END IF;
+	           -- OR
+	           IF funct3 = "100" and funct7 = "0000000" THEN
+	           	TranslatedC &lt;= "00100"; 
+	           END IF;
+	           -- XOR
+	           IF funct3 = "110" and funct7 = "0000000" THEN
+	           	TranslatedC &lt;= "00101"; 
+	           END IF;
+	           -- 	SLL
+	           IF funct3 = "001" and funct7 = "0000000" THEN
+	           	TranslatedC &lt;= "01001"; 
+	           END IF;
+	           --	SRL
+	           IF funct3 = "101" and funct7 = "0000000" THEN
+	           	TranslatedC &lt;= "01010"; 
+	           END IF;
+	           --	SRA
+	           IF funct3 = "101" and funct7 = "0100000" THEN
+	           	TranslatedC &lt;= "01011"; 
+	           END IF;
+		WHEN "0010011" =&gt; -- I-Type
+			-- ADDi
+	           IF funct3 = "000" THEN
+	           	TranslatedC &lt;= "00010"; 
+	           END IF;
+	           -- ANDi
+	           IF funct3 = "010" THEN
+	           	TranslatedC &lt;= "00110"; 
+	           END IF;
+	           -- ORi
+	           IF funct3 = "100" THEN
+	           	TranslatedC &lt;= "00111"; 
+	           END IF;
+	           -- XORi
+	           IF funct3 = "110" THEN
+	           	TranslatedC &lt;= "01000"; 
+	           END IF;
+		WHEN "1100011" =&gt; -- B-Type
+		  	-- BEQ
+	         	IF funct3 = "000" THEN
+          			TranslatedC &lt;= "01110"; 
+	         	END IF;
+	          -- BNE
+	          	IF funct3 = "001" THEN
+	          		TranslatedC &lt;= "01111"; 
+	      	END IF;
                 
-            WHEN "1101111" =&gt; -- jal
-                IF funct3 = "000" and funct7 = "0000001" THEN
-                	TranslatedC &lt;= "10000"; 
-                END IF;
-            WHEN "1100111" =&gt; -- jalr
-                IF funct3 = "000" and funct7 = "0000000" THEN
+      	WHEN "1101111" =&gt; -- jal
+           	IF funct3 = "000" THEN
+               		TranslatedC &lt;= "10000"; 
+              	END IF;
+        	WHEN "1100111" =&gt; -- jalr
+               	IF funct3 = "000" THEN
                 	TranslatedC &lt;= "10001"; 
-                END IF;
+               	END IF;
                 
-            WHEN "0110111" =&gt; -- U-Type
-                -- 	LUI
-                IF funct3 = "101" and funct7 = "0001001" THEN
-                	TranslatedC &lt;= "10010"; 
-                END IF;
-
-            WHEN "0010111" =&gt; -- U-Type 2
-                -- 	AUIPC
-                IF funct3 = "000" and funct7 = "0001000" THEN
-                	TranslatedC &lt;= "10011"; 
-                END IF;
+        	WHEN "0110111" =&gt; -- U-Type
+            	-- 	LUI
+              	IF funct3 = "101" THEN
+               		TranslatedC &lt;= "10010"; 
+             	END IF;
+        	WHEN "0010111" =&gt; -- U-Type 2
+           	-- 	AUIPC
+              	IF funct3 = "000" THEN
+               		TranslatedC &lt;= "10011"; 
+              	END IF;
  
-            WHEN "1110011" =&gt; -- I-Type 2
-                -- 	ECALL
-                IF funct3 = "000" and funct7 = "0000000" THEN
-                	TranslatedC &lt;= "10100"; 
-                END IF;
-            WHEN "0000011" =&gt; -- Load
-            IF funct3 = "010"  THEN -- sw
-                	TranslatedC &lt;= "01100"; 
-                END IF;
-            WHEN "0100011" =&gt; -- S-Type
-            	IF funct3 = "010"  THEN -- sw
-                	TranslatedC &lt;= "01101"; 
-                END IF;
-            WHEN OTHERS =&gt;
-            	TranslatedC &lt;= "11111";
+        	WHEN "1110011" =&gt; -- I-Type 2
+			-- 	ECALL
+              	IF funct3 = "000" THEN
+               		TranslatedC &lt;= "10100"; 
+              	END IF;
+        	WHEN "0000011" =&gt; -- Load
+           	IF funct3 = "010" THEN -- sw
+               		TranslatedC &lt;= "01100"; 
+              	END IF;
+        	WHEN "0100011" =&gt; -- S-Type
+           	IF funct3 = "010" THEN -- sw
+				TranslatedC &lt;= "01101"; 
+              	END IF;
+         	WHEN "0000000" =&gt; -- Empty
+			IF funct3 = "000" and funct7 = "0000000" THEN
+				TranslatedC &lt;= "00000";
+			END IF;
+       	WHEN OTHERS =&gt;
+           	TranslatedC &lt;= "11111";
         END CASE;
     END PROCESS;
 &#13;
