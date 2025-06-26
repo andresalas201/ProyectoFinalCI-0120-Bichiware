@@ -6962,370 +6962,377 @@ use STD.TEXTIO.ALL;
 use IEEE.STD_LOGIC_TEXTIO.ALL;
 
 entity cache_datos is
-    Port (
-        clk         : in  STD_LOGIC;
-        reset       : in  STD_LOGIC;
-        
-        -- Interfaz con CPU
-        cpu_addr    : in  STD_LOGIC_VECTOR(13 downto 0);
-        cpu_data_in : in  STD_LOGIC_VECTOR(31 downto 0);
-        cpu_data_out: out STD_LOGIC_VECTOR(31 downto 0);
-        cpu_write   : in  STD_LOGIC;
-        cpu_read    : in  STD_LOGIC;
-        cpu_enable  : in  STD_LOGIC;
-        
-        -- Interfaz con RAM
-        ram_addr    : out STD_LOGIC_VECTOR(13 downto 0);
-        ram_data_in : in  STD_LOGIC_VECTOR(31 downto 0);
-        ram_data_out: out STD_LOGIC_VECTOR(31 downto 0);
-        ram_write   : out STD_LOGIC;
-        ram_read    : out STD_LOGIC;
-        
-        -- Señales de control
-        cache_hit   : out STD_LOGIC;
-        cache_miss  : out STD_LOGIC;
-        busy        : out STD_LOGIC;
-        
-        -- Monitoreo
-        monitor_enable : in STD_LOGIC
-    );
+  Port (
+      clk         : in  STD_LOGIC;
+      reset       : in  STD_LOGIC;
+      cpu_asked_address    : in  STD_LOGIC_VECTOR(13 downto 0); -- direccion pedida por la cpu
+      cpu_data_to_write : in  STD_LOGIC_VECTOR(31 downto 0); -- dato que se quiere escribir en memoria
+      cpu_return_data: out STD_LOGIC_VECTOR(31 downto 0); -- dato leido desde la cache
+      cpu_write   : in  STD_LOGIC; -- señal que indica que se quiere escribir en memoria
+      cpu_read    : in  STD_LOGIC; -- señal que indica que se quiere leer de memoria
+      cpu_enable  : in  STD_LOGIC; -- señal que habilita las operaciones de memoria
+    
+      ram_address    : out STD_LOGIC_VECTOR(13 downto 0); -- direccion de memoria a leer o a escribir en la ram
+      ram_data_to_write : in  STD_LOGIC_VECTOR(31 downto 0); -- dato a escribir en la ram
+      ram_return_data: out STD_LOGIC_VECTOR(31 downto 0); -- dato extraido de la ram tras una lectura
+      ram_write   : out STD_LOGIC; -- señal que indica que se quiere escribir en la ram
+      ram_read    : out STD_LOGIC; -- señal que indica que se quiere leer de la ram
+    
+      cache_hit   : out STD_LOGIC; -- señal que indica un hit
+      cache_miss  : out STD_LOGIC; -- señal que indica un miss
+      busy        : out STD_LOGIC; -- señal que indica que la cache esta ocupada
+    
+      monitor_enable : in STD_LOGIC -- para imprimir cosas
+  );
 end cache_datos;
 
 architecture Behavioral of cache_datos is
-    
-    -- Constantes
-    constant CACHE_SIZE    : integer := 32;
-    constant BLOCK_SIZE    : integer := 4;
-    constant WORD_SIZE     : integer := 32;
-    constant INDEX_BITS    : integer := 5;
-    constant OFFSET_BITS   : integer := 2;
-    constant TAG_BITS      : integer := 7;
-    
-    -- Tipos de datos
-    type word_array is array (0 to BLOCK_SIZE-1) of STD_LOGIC_VECTOR(WORD_SIZE-1 downto 0);
-    type cache_block is record
-        valid : STD_LOGIC;
-        dirty : STD_LOGIC;
-        tag   : STD_LOGIC_VECTOR(TAG_BITS-1 downto 0);
-        data  : word_array;
-    end record;
-    
-    type cache_array is array (0 to CACHE_SIZE-1) of cache_block;
-    
-    -- Estados de la máquina de estados
-    type state_type is (IDLE, CHECK_HIT, READ_MISS, WRITE_BACK, ALLOCATE, WRITE_THROUGH);
-    
-    -- Señales internas
-    signal cache_mem : cache_array;
-    signal current_state, next_state : state_type;
-    
-    -- Decodificación de dirección
-    signal addr_tag    : STD_LOGIC_VECTOR(TAG_BITS-1 downto 0);
-    signal addr_index  : STD_LOGIC_VECTOR(INDEX_BITS-1 downto 0);
-    signal addr_offset : STD_LOGIC_VECTOR(OFFSET_BITS-1 downto 0);
-    
-    -- Señales de control internas
-    signal hit_detected : STD_LOGIC;
-    signal miss_detected : STD_LOGIC;
-    signal current_block : cache_block;
-    signal index_int : integer range 0 to CACHE_SIZE-1;
-    signal offset_int : integer range 0 to BLOCK_SIZE-1;
-    
-    -- Contador para operaciones de bloque (extendido para dar tiempo a la última palabra)
-    signal word_counter : integer range 0 to BLOCK_SIZE + 2;
-    
-    -- Buffer temporal para lectura con señales de control
-    signal read_data_buffer : word_array;
-    signal data_valid_flag : STD_LOGIC;  -- Señal para indicar que hay datos válidos
-    signal ram_read_internal : STD_LOGIC; -- Señal interna para ram_read
-    signal prev_ram_read : STD_LOGIC;    -- Para detectar flanco de ram_read
-    
-    -- Función para convertir std_logic_vector a string
-    function slv_to_string(slv : STD_LOGIC_VECTOR) return string is
-        variable result : string(1 to slv'length);
-        variable r : integer := 1;
-    begin
-        for i in slv'range loop
-            if slv(i) = '1' then
-                result(r) := '1';
-            else
-                result(r) := '0';
-            end if;
-            r := r + 1;
-        end loop;
-        return result;
-    end function;
+
+  -- constantes que indican la organizacion de la cache
+  constant CACHE_SIZE    : integer := 32; -- 32 bloques
+  constant BLOCK_SIZE    : integer := 4; -- 4 palabras por bloque
+  constant WORD_SIZE     : integer := 32; -- palabras de 32 bits
+  constant INDEX_BITS    : integer := 5; -- 5 bits de indice
+  constant OFFSET_BITS   : integer := 2; -- 2 bits de offset
+  constant TAG_BITS      : integer := 7; -- 7 bits de tag
+
+  -- estructura de los bloques de cache: tiene un valid bit, un dirty bit, un tag y 4 palabras
+  type word_array is array (0 to BLOCK_SIZE-1) of STD_LOGIC_VECTOR(WORD_SIZE-1 downto 0);
+  type cache_block is record
+      valid : STD_LOGIC;
+      dirty : STD_LOGIC;
+      tag   : STD_LOGIC_VECTOR(TAG_BITS-1 downto 0);
+      data  : word_array;
+  end record;
+  type cache_array is array (0 to CACHE_SIZE-1) of cache_block;
+
+  -- la cache se trata como una maquina de estados, estos son sus posibles estados:
+  -- idle: espera a que la cpu habilite una operacion
+  -- check_hit: revisa si hay hit
+  -- read_miss: lee un bloque desde la ram
+  -- write_back: escribe un bloque sucio en la ram antes de escribir
+  -- allocate: carga un bloque a cache
+  -- write_through: escribe en cache y en la ram
+  type state_type is (IDLE, CHECK_HIT, READ_MISS, WRITE_BACK, ALLOCATE, WRITE_THROUGH);
+
+  -- señales internas
+  signal cache_mem : cache_array;
+  signal current_state, next_state : state_type;
+
+  -- asi se decodifica la direccion:
+  signal addr_tag    : STD_LOGIC_VECTOR(TAG_BITS-1 downto 0); -- tag de la direccion
+  signal addr_index  : STD_LOGIC_VECTOR(INDEX_BITS-1 downto 0); -- indice de la direccion
+  signal addr_offset : STD_LOGIC_VECTOR(OFFSET_BITS-1 downto 0); -- offset de la direccion
+
+  signal hit_detected : STD_LOGIC; -- señal que indica que hubo un hit
+  signal miss_detected : STD_LOGIC; -- señal que indica que hubo un miss
+  signal current_block : cache_block; -- bloque actual
+  signal index_int : integer range 0 to CACHE_SIZE-1; -- indice para identificar el bloque de cache a acceder
+  signal offset_int : integer range 0 to BLOCK_SIZE-1; -- indice para identificar la palabra dentro de ese bloque a acceder
+
+  -- contador para operaciones de bloque
+  -- se extiende en 2 para dar tiempo a la última palabra
+  signal word_counter : integer range 0 to BLOCK_SIZE + 2;
+
+  signal read_data_buffer : word_array; -- buffer en donde se concatenan las 4 palabras de la ram para enviarlas a la cache
+  signal data_valid_flag : STD_LOGIC;  -- señal que indica si los datos son validos
+  signal ram_read_internal : STD_LOGIC; -- señal para controlar lecturas en la ram
+  signal previous_ram_read : STD_LOGIC; -- guarda el valor anterior de ram_read_internal
+
+  -- convertir std_logic_vector a string para despues imprimirlo (debuggeo)
+  function slv_to_string(slv : STD_LOGIC_VECTOR) return string is
+      variable result : string(1 to slv'length);
+      variable r : integer := 1;
+  begin
+      for i in slv'range loop
+          if slv(i) = '1' then
+              result(r) := '1';
+          else
+              result(r) := '0';
+          end if;
+          r := r + 1;
+      end loop;
+      return result;
+  end function;
 
 begin
-    
-    -- Decodificación de dirección
-    addr_tag    &lt;= cpu_addr(13 downto 7);
-    addr_index  &lt;= cpu_addr(6 downto 2);
-    addr_offset &lt;= cpu_addr(1 downto 0);
-    
-    index_int &lt;= to_integer(unsigned(addr_index));
-    offset_int &lt;= to_integer(unsigned(addr_offset));
-    current_block &lt;= cache_mem(index_int);
-    
-    -- Detección de hit/miss
-    hit_detected &lt;= '1' when (current_block.valid = '1' and 
-                             current_block.tag = addr_tag) else '0';
-    miss_detected &lt;= not hit_detected;
-    
-    -- Asignación de salidas
-    cache_hit &lt;= hit_detected when current_state = CHECK_HIT else '0';
-    cache_miss &lt;= miss_detected when current_state = CHECK_HIT else '0';
-    busy &lt;= '1' when current_state /= IDLE else '0';
-    ram_read &lt;= ram_read_internal; -- Conectar señal interna a salida
-    
-    -- Máquina de estados - transiciones
-    process(clk, reset)
-    begin
-        if reset = '1' then
-            current_state &lt;= IDLE;
-            word_counter &lt;= 0;
-            prev_ram_read &lt;= '0';
-        elsif rising_edge(clk) then
-            current_state &lt;= next_state;
-            prev_ram_read &lt;= ram_read_internal; -- Usar señal interna
-            
-            -- Manejo del contador
-            if current_state = READ_MISS or current_state = WRITE_BACK then
-                if (current_state = READ_MISS and word_counter &lt; BLOCK_SIZE + 1) or 
-                   (current_state = WRITE_BACK and word_counter &lt; BLOCK_SIZE) then
-                    word_counter &lt;= word_counter + 1;
-                else
-                    word_counter &lt;= 0;
-                end if;
-            else
-                word_counter &lt;= 0;
-            end if;
-        end if;
-    end process;
-    
-    -- Lógica de siguiente estado
-    process(current_state, cpu_enable, cpu_read, cpu_write, hit_detected, 
-            miss_detected, word_counter, current_block.dirty)
-    begin
-        case current_state is
-            when IDLE =&gt;
-                if cpu_enable = '1' and (cpu_read = '1' or cpu_write = '1') then
-                    next_state &lt;= CHECK_HIT;
-                else
-                    next_state &lt;= IDLE;
-                end if;
-                
-            when CHECK_HIT =&gt;
-                if hit_detected = '1' then
-                    if cpu_write = '1' then
-                        next_state &lt;= WRITE_THROUGH;
-                    else
-                        next_state &lt;= IDLE;
-                    end if;
-                elsif miss_detected = '1' then
-                    if current_block.valid = '1' and current_block.dirty = '1' then
-                        next_state &lt;= WRITE_BACK;
-                    else
-                        next_state &lt;= READ_MISS;
-                    end if;
-                else
-                    next_state &lt;= IDLE;
-                end if;
-                
-            when WRITE_BACK =&gt;
-                if word_counter &gt;= BLOCK_SIZE then
-                    next_state &lt;= READ_MISS;
-                else
-                    next_state &lt;= WRITE_BACK;
-                end if;
-                
-            when READ_MISS =&gt;
-                if word_counter &gt;= BLOCK_SIZE + 1 then
-                    next_state &lt;= ALLOCATE;
-                else
-                    next_state &lt;= READ_MISS;
-                end if;
-                
-            when ALLOCATE =&gt;
-                if cpu_write = '1' then
-                    next_state &lt;= WRITE_THROUGH;
-                else
-                    next_state &lt;= IDLE;
-                end if;
-                
-            when WRITE_THROUGH =&gt;
-                next_state &lt;= IDLE;
-                
-            when others =&gt;
-                next_state &lt;= IDLE;
-        end case;
-    end process;
-    
-    -- Lógica principal de la cache
-    process(clk, reset)
-        variable temp_block : cache_block;
-        variable line : line;
-    begin
-        if reset = '1' then
-            -- Inicializar cache
-            for i in 0 to CACHE_SIZE-1 loop
-                cache_mem(i).valid &lt;= '0';
-                cache_mem(i).dirty &lt;= '0';
-                cache_mem(i).tag &lt;= (others =&gt; '0');
-                for j in 0 to BLOCK_SIZE-1 loop
-                    cache_mem(i).data(j) &lt;= (others =&gt; '0');
-                end loop;
-            end loop;
-            
-            -- Inicializar buffer de lectura
-            for j in 0 to BLOCK_SIZE-1 loop
-                read_data_buffer(j) &lt;= (others =&gt; '0');
-            end loop;
-            
-            -- Inicializar señales de RAM
-            ram_addr &lt;= (others =&gt; '0');
-            ram_data_out &lt;= (others =&gt; '0');
-            ram_write &lt;= '0';
-            ram_read_internal &lt;= '0';
-            cpu_data_out &lt;= (others =&gt; '0');
-            data_valid_flag &lt;= '0';
-            
-        elsif rising_edge(clk) then
-            
-            -- Default values
-            ram_write &lt;= '0';
-            ram_read_internal &lt;= '0';
-            data_valid_flag &lt;= '0';
-            
-            case current_state is
-                when IDLE =&gt;
-                    ram_addr &lt;= (others =&gt; '0');
-                    ram_data_out &lt;= (others =&gt; '0');
-                    
-                when CHECK_HIT =&gt;
-                    if hit_detected = '1' and cpu_read = '1' then
-                        -- Read hit
-                        cpu_data_out &lt;= current_block.data(offset_int);
-                        
-                        if monitor_enable = '1' then
-                            write(line, string'("CACHE HIT - READ: Addr=0x"));
-                            write(line, slv_to_string(cpu_addr));
-                            write(line, string'(" Data=0x"));
-                            write(line, slv_to_string(current_block.data(offset_int)));
-                            writeline(output, line);
-                        end if;
-                    end if;
-                    
-                when WRITE_BACK =&gt;
-                    -- Escribir bloque sucio a RAM
-                    if word_counter &lt; BLOCK_SIZE then
-                        ram_addr &lt;= current_block.tag &amp; addr_index &amp; std_logic_vector(to_unsigned(word_counter, 2));
-                        ram_data_out &lt;= current_block.data(word_counter);
-                        ram_write &lt;= '1';
-                    end if;
-                    
-                    if monitor_enable = '1' and word_counter = 0 then
-                        write(line, string'("CACHE WRITE-BACK: Block "));
-                        write(line, index_int);
-                        writeline(output, line);
-                    end if;
-                    
-                when READ_MISS =&gt;
-                    -- SOLUCIÓN CORREGIDA: Manejo correcto con 2 ciclos de retraso
-                    if word_counter &lt; BLOCK_SIZE then
-                        -- Solicitar palabra de RAM
-                        ram_addr &lt;= addr_tag &amp; addr_index &amp; std_logic_vector(to_unsigned(word_counter, 2));
-                        ram_read_internal &lt;= '1';
-                        
-                        if monitor_enable = '1' then
-                            write(line, string'("REQUESTING: word "));
-                            write(line, word_counter);
-                            write(line, string'(" addr=0x"));
-                            write(line, slv_to_string(addr_tag &amp; addr_index &amp; std_logic_vector(to_unsigned(word_counter, 2))));
-                            writeline(output, line);
-                        end if;
-                    end if;
-                    
-                    -- Capturar datos con 2 ciclos de retraso
-                    -- Los datos válidos están disponibles 2 ciclos después de la solicitud
-                    if word_counter &gt;= 2 and word_counter &lt;= BLOCK_SIZE + 1 then
-                        read_data_buffer(word_counter - 2) &lt;= ram_data_in;
-                        data_valid_flag &lt;= '1';
-                        
-                        if monitor_enable = '1' then
-                            write(line, string'("STORING: index="));
-                            write(line, word_counter - 2);
-                            write(line, string'(" data=0x"));
-                            write(line, slv_to_string(ram_data_in));
-                            writeline(output, line);
-                        end if;
-                    end if;
-                    
-                    if monitor_enable = '1' and word_counter = 0 then
-                        write(line, string'("CACHE MISS - READING: Block "));
-                        write(line, index_int);
-                        write(line, string'(" Tag=0x"));
-                        write(line, slv_to_string(addr_tag));
-                        writeline(output, line);
-                    end if;
-                    
-                when ALLOCATE =&gt;
-                    -- Actualizar la cache con todos los datos leídos
-                    temp_block := cache_mem(index_int);
-                    temp_block.data := read_data_buffer;
-                    temp_block.valid := '1';
-                    temp_block.dirty := '0';
-                    temp_block.tag := addr_tag;
-                    cache_mem(index_int) &lt;= temp_block;
-                    
-                    -- Si es lectura, proporcionar dato solicitado
-                    if cpu_read = '1' then
-                        cpu_data_out &lt;= read_data_buffer(offset_int);
-                    end if;
-                    
-                    if monitor_enable = '1' then
-                        write(line, string'("CACHE ALLOCATED: Block "));
-                        write(line, index_int);
-                        write(line, string'(" Tag=0x"));
-                        write(line, slv_to_string(addr_tag));
-                        write(line, string'(" Data[0]=0x"));
-                        write(line, slv_to_string(read_data_buffer(0)));
-                        write(line, string'(" Data[1]=0x"));
-                        write(line, slv_to_string(read_data_buffer(1)));
-                        write(line, string'(" Data[2]=0x"));
-                        write(line, slv_to_string(read_data_buffer(2)));
-                        write(line, string'(" Data[3]=0x"));
-                        write(line, slv_to_string(read_data_buffer(3)));
-                        writeline(output, line);
-                    end if;
-                    
-                when WRITE_THROUGH =&gt;
-                    -- Escribir en cache
-                    temp_block := cache_mem(index_int);
-                    temp_block.data(offset_int) := cpu_data_in;
-                    temp_block.dirty := '1';
-                    cache_mem(index_int) &lt;= temp_block;
-                    
-                    -- Escribir en RAM
-                    ram_addr &lt;= cpu_addr;
-                    ram_data_out &lt;= cpu_data_in;
-                    ram_write &lt;= '1';
-                    
-                    if monitor_enable = '1' then
-                        write(line, string'("CACHE WRITE: Addr=0x"));
-                        write(line, slv_to_string(cpu_addr));
-                        write(line, string'(" Data=0x"));
-                        write(line, slv_to_string(cpu_data_in));
-                        writeline(output, line);
-                    end if;
-                    
-                when others =&gt;
-                    null;
-            end case;
-        end if;
-    end process;
 
-end Behavioral;</vhdl>
+  -- decodificar la direccion segun el esquema anterior
+  addr_tag    &lt;= cpu_asked_address(13 downto 7);
+  addr_index  &lt;= cpu_asked_address(6 downto 2);
+  addr_offset &lt;= cpu_asked_address(1 downto 0);
+  index_int &lt;= to_integer(unsigned(addr_index));
+  offset_int &lt;= to_integer(unsigned(addr_offset));
+  current_block &lt;= cache_mem(index_int);
+
+  -- detectar hits y misses
+  hit_detected &lt;= '1' when (current_block.valid = '1' and -- hay hit si el bloque actual es valido y si el tag del bloque actual es igual al tag de la direccion
+                           current_block.tag = addr_tag) else '0';
+  miss_detected &lt;= not hit_detected; -- hay miss en caso contrario
+
+  -- se activan algunas salidas
+  cache_hit &lt;= hit_detected when current_state = CHECK_HIT else '0'; -- se retorna que hubo hit en caso de haberlo
+  cache_miss &lt;= miss_detected when current_state = CHECK_HIT else '0'; -- se retorna miss en caso de haberlo
+  busy &lt;= '1' when current_state /= IDLE else '0'; -- se detecta busy si el estado no es IDLE
+  ram_read &lt;= ram_read_internal;
+
+  -- proceso que establece como se haran los cambios de estado y la logica del contador de operaciones de bloque
+  process(clk, reset)
+  begin
+         -- si la señal reset esta activada entonces todo se reinicia y el estado pasa a IDLE
+      if reset = '1' then
+          current_state &lt;= IDLE;
+          word_counter &lt;= 0;
+          previous_ram_read &lt;= '0';
+      -- si no hay reset, con cada relojazo cambia el estado
+      elsif rising_edge(clk) then
+          current_state &lt;= next_state;
+          previous_ram_read &lt;= ram_read_internal;
+        
+          -- logica del contador de operaciones de bloque
+          if current_state = READ_MISS or current_state = WRITE_BACK then
+              if (current_state = READ_MISS and word_counter &lt; BLOCK_SIZE + 1) or
+                 (current_state = WRITE_BACK and word_counter &lt; BLOCK_SIZE) then
+                  word_counter &lt;= word_counter + 1;
+              else
+                  word_counter &lt;= 0;
+              end if;
+          else
+              word_counter &lt;= 0;
+          end if;
+      end if;
+  end process;
+
+  -- proceso que se encarga de los cambios entre estados
+  process(current_state, cpu_enable, cpu_read, cpu_write, hit_detected,
+          miss_detected, word_counter, current_block.dirty)
+  begin
+      case current_state is
+            -- si el estado actual es IDLE, solo pasa a CHECK_HIT si la señal de leer o escribir en memoria esta activada
+          when IDLE =&gt;
+              if cpu_enable = '1' and (cpu_read = '1' or cpu_write = '1') then
+                  next_state &lt;= CHECK_HIT;
+              else
+                  next_state &lt;= IDLE;
+              end if;
+          -- si el estado es CHECK_HIT pasa a WRITE_THOUGH si hay un hit y esta activada la señal de escritura en memoria y pasa a IDLE en caso contrario
+          -- para a WRITE_BACK si hay un miss y el bloque actual es valido y su dirty bit es 1, y pasa a READ_MISS en caso contrario
+          -- en cualquier otro caso para a IDLE
+          when CHECK_HIT =&gt;
+              if hit_detected = '1' then
+                  if cpu_write = '1' then
+                      next_state &lt;= WRITE_THROUGH;
+                  else
+                      next_state &lt;= IDLE;
+                  end if;
+              elsif miss_detected = '1' then
+                  if current_block.valid = '1' and current_block.dirty = '1' then
+                      next_state &lt;= WRITE_BACK;
+                  else
+                      next_state &lt;= READ_MISS;
+                  end if;
+              else
+                  next_state &lt;= IDLE;
+              end if;
+          -- si el estado actual es WRITE_BACK pasa a READ_MISS si el contador de operaciones de bloque es mayor o igual al tamaño del bloque, y se mantiene en WRITE_BACK en caso contrario
+          when WRITE_BACK =&gt;
+              if word_counter &gt;= BLOCK_SIZE then
+                  next_state &lt;= READ_MISS;
+              else
+                  next_state &lt;= WRITE_BACK;
+              end if;
+          -- si el estado actual es READ_MISS pasa a ALLOCATE si el contador de operaciones de bloque es mayor o igual al tamaño del bloque + 1, y se mantiene en READ_MISS en caso contrario
+          when READ_MISS =&gt;
+              if word_counter &gt;= BLOCK_SIZE + 1 then
+                  next_state &lt;= ALLOCATE;
+              else
+                  next_state &lt;= READ_MISS;
+              end if;
+          -- si el estado actual es ALLOCATE pasa a WRITE_THROUGH si esta activada la señal de escritura en memoria, pasa a IDLE en caso contrario
+          when ALLOCATE =&gt;
+              if cpu_write = '1' then
+                  next_state &lt;= WRITE_THROUGH;
+              else
+                  next_state &lt;= IDLE;
+              end if;
+          -- de WRITE_THROUH se pasa a IDLE incondicionalemente
+          when WRITE_THROUGH =&gt;
+              next_state &lt;= IDLE;
+          -- el estado por defecto es IDLE
+          when others =&gt;
+              next_state &lt;= IDLE;
+      end case;
+  end process;
+
+  -- proceso que se encarga de la logica de cada estado
+  process(clk, reset)
+      variable temp_block : cache_block;
+      variable line : line;
+  begin
+      if reset = '1' then
+          -- Inicializar todos los datos
+          for i in 0 to CACHE_SIZE-1 loop
+              cache_mem(i).valid &lt;= '0';
+              cache_mem(i).dirty &lt;= '0';
+              cache_mem(i).tag &lt;= (others =&gt; '0');
+              for j in 0 to BLOCK_SIZE-1 loop
+                  cache_mem(i).data(j) &lt;= (others =&gt; '0');
+              end loop;
+          end loop;
+        
+          for j in 0 to BLOCK_SIZE-1 loop
+              read_data_buffer(j) &lt;= (others =&gt; '0');
+          end loop;
+        
+          ram_address &lt;= (others =&gt; '0');
+          ram_return_data &lt;= (others =&gt; '0');
+          ram_write &lt;= '0';
+          ram_read_internal &lt;= '0';
+          cpu_return_data &lt;= (others =&gt; '0');
+          data_valid_flag &lt;= '0';
+        
+      elsif rising_edge(clk) then
+        
+          ram_write &lt;= '0';
+          ram_read_internal &lt;= '0';
+          data_valid_flag &lt;= '0';
+        
+          case current_state is
+               -- logica del estado IDLE
+              when IDLE =&gt;
+                  -- no pasa nada
+                  ram_address &lt;= (others =&gt; '0');
+                  ram_return_data &lt;= (others =&gt; '0');
+              -- logica del estado CHECK_HIT
+              when CHECK_HIT =&gt;
+                  -- si hay hit y esta activada la bandera de lectura de memoria se devuelve el dato que indique el indice
+                  if hit_detected = '1' and cpu_read = '1' then
+                      cpu_return_data &lt;= current_block.data(offset_int);
+                      -- prints
+                      if monitor_enable = '1' then
+                          write(line, string'("Estado CHECK_HIT, direccion "));
+                          write(line, slv_to_string(cpu_asked_address));
+                          write(line, string'(" dato: "));
+                          write(line, slv_to_string(current_block.data(offset_int)));
+                          writeline(output, line);
+                      end if;
+                  end if;
+              -- logica del estado WRITE_BACK
+              when WRITE_BACK =&gt;
+                  -- escribe las 4 palabras en la ram
+                  if word_counter &lt; BLOCK_SIZE then
+                      ram_address &lt;= current_block.tag &amp; addr_index &amp; std_logic_vector(to_unsigned(word_counter, 2));
+                      ram_return_data &lt;= current_block.data(word_counter);
+                      ram_write &lt;= '1';
+                  end if;
+                
+                  if monitor_enable = '1' and word_counter = 0 then
+                      write(line, string'("Estado WRITE-BACK: Bloque "));
+                      write(line, index_int);
+                      writeline(output, line);
+                  end if;
+              -- logica del estado READ_MISS
+              when READ_MISS =&gt;
+                  if word_counter &lt; BLOCK_SIZE then
+                      -- se piden las 4 palabras a la ram
+                      ram_address &lt;= addr_tag &amp; addr_index &amp; std_logic_vector(to_unsigned(word_counter, 2));
+                      ram_read_internal &lt;= '1';
+                      -- prints
+                      if monitor_enable = '1' then
+                          write(line, string'("Estado READ_MISS, pidiendo palabra "));
+                          write(line, word_counter);
+                          write(line, string'(" direccion "));
+                          write(line, slv_to_string(addr_tag &amp; addr_index &amp; std_logic_vector(to_unsigned(word_counter, 2))));
+                          writeline(output, line);
+                      end if;
+                  end if;
+
+                  -- traer datos con 2 ciclos de retraso
+                  -- la ram tarda 2 ciclos en traer los datos, entonces por eso hay un retraso
+                  if word_counter &gt;= 2 and word_counter &lt;= BLOCK_SIZE + 1 then
+                      read_data_buffer(word_counter - 2) &lt;= ram_data_to_write;
+                      data_valid_flag &lt;= '1';
+                      -- prints
+                      if monitor_enable = '1' then
+                          write(line, string'("Almacenando indice"));
+                          write(line, word_counter - 2);
+                          write(line, string'(" dato "));
+                          write(line, slv_to_string(ram_data_to_write));
+                          writeline(output, line);
+                      end if;
+                  end if;
+                  -- prints
+                  if monitor_enable = '1' and word_counter = 0 then
+                      write(line, string'("Leyendo bloque "));
+                      write(line, index_int);
+                      write(line, string'(" Tag "));
+                      write(line, slv_to_string(addr_tag));
+                      writeline(output, line);
+                  end if;
+              -- logica del estado ALLOCATE
+              when ALLOCATE =&gt;
+                  -- se carga lo que haya en el buffer en el bloque de la cache correspondiente
+                  temp_block := cache_mem(index_int);
+                  temp_block.data := read_data_buffer;
+                  -- se actualizan los valid, dirty y tag bit
+                  temp_block.valid := '1';
+                  temp_block.dirty := '0';
+                  temp_block.tag := addr_tag;
+                  cache_mem(index_int) &lt;= temp_block;
+                
+                  -- si la señal de lectura de memoria estaba activada entonces se retorna ese valor
+                  if cpu_read = '1' then
+                      cpu_return_data &lt;= read_data_buffer(offset_int);
+                  end if;
+                  -- prints
+                  if monitor_enable = '1' then
+                      write(line, string'("Estado ALLOCATE, bloque "));
+                      write(line, index_int);
+                      write(line, string'(" Tag "));
+                      write(line, slv_to_string(addr_tag));
+                      write(line, string'(" Palabra1"));
+                      write(line, slv_to_string(read_data_buffer(0)));
+                      write(line, string'(" Palabra2"));
+                      write(line, slv_to_string(read_data_buffer(1)));
+                      write(line, string'(" Palabra3"));
+                      write(line, slv_to_string(read_data_buffer(2)));
+                      write(line, string'(" Palabra4"));
+                      write(line, slv_to_string(read_data_buffer(3)));
+                      writeline(output, line);
+                  end if;
+              -- logica del estado WRITE_THROUGH
+              when WRITE_THROUGH =&gt;
+                  -- se escribe en cache
+                  temp_block := cache_mem(index_int);
+                  temp_block.data(offset_int) := cpu_data_to_write;
+                  temp_block.dirty := '1';
+                  cache_mem(index_int) &lt;= temp_block;
+                
+                  -- se escribe en ram
+                  ram_address &lt;= cpu_asked_address;
+                  ram_return_data &lt;= cpu_data_to_write;
+                  ram_write &lt;= '1';
+                  -- prints
+                  if monitor_enable = '1' then
+                      write(line, string'("Estado WRITE_THROUGH, direccion "));
+                      write(line, slv_to_string(cpu_asked_address));
+                      write(line, string'(" Dato "));
+                      write(line, slv_to_string(cpu_data_to_write));
+                      writeline(output, line);
+                  end if;
+                
+              when others =&gt;
+                  null;
+          end case;
+      end if;
+  end process;
+
+end Behavioral;
+
+
+
+
+</vhdl>
   <vhdl name="cache_instrucciones">library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
@@ -7333,290 +7340,291 @@ use STD.TEXTIO.ALL;
 use IEEE.STD_LOGIC_TEXTIO.ALL;
 
 entity cache_instrucciones is
-    Port (
-        clk         : in  STD_LOGIC;
-        reset       : in  STD_LOGIC;
-        
-        -- Interfaz con CPU
-        cpu_addr    : in  STD_LOGIC_VECTOR(13 downto 0);
-        cpu_instruction : out STD_LOGIC_VECTOR(31 downto 0);
-        cpu_read    : in  STD_LOGIC;
-        cpu_enable  : in  STD_LOGIC;
-        
-        -- Interfaz con RAM
-        ram_addr    : out STD_LOGIC_VECTOR(13 downto 0);
-        ram_data_in : in  STD_LOGIC_VECTOR(31 downto 0);
-        ram_read    : out STD_LOGIC;
-        
-        -- Señales de control
-        cache_hit   : out STD_LOGIC;
-        cache_miss  : out STD_LOGIC;
-        busy        : out STD_LOGIC;
-        
-        -- Monitoreo
-        monitor_enable : in STD_LOGIC
-    );
+ Port (
+     clk         : in  STD_LOGIC;
+     reset       : in  STD_LOGIC;
+  
+     cpu_address    : in  STD_LOGIC_VECTOR(13 downto 0); -- direccion solicitada
+     cpu_instruction : out STD_LOGIC_VECTOR(31 downto 0); -- instruccion leida de la cache
+     cpu_read    : in  STD_LOGIC; -- señal que indica que se quiere leer de memoria
+     cpu_enable  : in  STD_LOGIC; -- señal que habilita las operaciones de memoria
+  
+     ram_address    : out STD_LOGIC_VECTOR(13 downto 0); -- direccion de memoria a leer o a escribir en la ram
+     ram_data_to_write : in  STD_LOGIC_VECTOR(31 downto 0); -- dato a escribir en la ram
+     ram_read    : out STD_LOGIC; -- señal que indica que se quiere leer de la ram
+  
+     cache_hit   : out STD_LOGIC; -- señal que indica un hit
+     cache_miss  : out STD_LOGIC; -- señal que indica un miss
+     busy        : out STD_LOGIC; -- señal que indica que la cache esta ocupada
+  
+     monitor_enable : in STD_LOGIC -- para prints
+ );
 end cache_instrucciones;
 
 architecture Behavioral of cache_instrucciones is
-    
-    -- Constantes - Incrementamos el tamaño de bloque para más instrucciones
-    constant CACHE_SIZE    : integer := 16;    -- Reducimos número de bloques
-    constant BLOCK_SIZE    : integer := 8;     -- Más palabras por bloque (8 instrucciones)
-    constant WORD_SIZE     : integer := 32;
-    constant INDEX_BITS    : integer := 4;     -- log2(16) = 4
-    constant OFFSET_BITS   : integer := 3;     -- log2(8) = 3
-    constant TAG_BITS      : integer := 7;     -- 14 - 4 - 3 = 7
-    
-    -- Tipos de datos
-    type word_array is array (0 to BLOCK_SIZE-1) of STD_LOGIC_VECTOR(WORD_SIZE-1 downto 0);
-    type cache_block is record
-        valid : STD_LOGIC;
-        tag   : STD_LOGIC_VECTOR(TAG_BITS-1 downto 0);
-        data  : word_array;
-    end record;
-    
-    type cache_array is array (0 to CACHE_SIZE-1) of cache_block;
-    
-    -- Estados simplificados (solo lectura)
-    type state_type is (IDLE, CHECK_HIT, READ_MISS, ALLOCATE);
-    
-    -- Señales internas
-    signal cache_mem : cache_array;
-    signal current_state, next_state : state_type;
-    
-    -- Decodificación de dirección
-    signal addr_tag    : STD_LOGIC_VECTOR(TAG_BITS-1 downto 0);
-    signal addr_index  : STD_LOGIC_VECTOR(INDEX_BITS-1 downto 0);
-    signal addr_offset : STD_LOGIC_VECTOR(OFFSET_BITS-1 downto 0);
-    
-    -- Señales de control internas
-    signal hit_detected : STD_LOGIC;
-    signal miss_detected : STD_LOGIC;
-    signal current_block : cache_block;
-    signal index_int : integer range 0 to CACHE_SIZE-1;
-    signal offset_int : integer range 0 to BLOCK_SIZE-1;
-    
-    -- Dirección base del bloque (alineada)
-    signal block_base_addr : STD_LOGIC_VECTOR(13 downto 0);
-    
-    -- Contador para operaciones de bloque
-    signal word_counter : integer range 0 to BLOCK_SIZE + 2;
-    
-    -- Buffer temporal para lectura
-    signal read_data_buffer : word_array;
-    signal ram_read_internal : STD_LOGIC;
-    
-    -- Función para convertir std_logic_vector a string
-    function slv_to_string(slv : STD_LOGIC_VECTOR) return string is
-        variable result : string(1 to slv'length);
-        variable r : integer := 1;
-    begin
-        for i in slv'range loop
-            if slv(i) = '1' then
-                result(r) := '1';
-            else
-                result(r) := '0';
-            end if;
-            r := r + 1;
-        end loop;
-        return result;
-    end function;
+
+-- constantes que indican la organizacion de la cache
+ constant CACHE_SIZE    : integer := 16; -- 16 bloques
+ constant BLOCK_SIZE    : integer := 8; -- 8 palabras por bloque
+ constant WORD_SIZE     : integer := 32; -- palabras de 32 bits
+ constant INDEX_BITS    : integer := 4; -- 4 bits de indice
+ constant OFFSET_BITS   : integer := 3; -- 3 bits de offset
+ constant TAG_BITS      : integer := 7; -- 7 bits de tag
+
+ -- estructura de los bloques de cache: tiene un valid bit, un dirty bit, un tag y 4 palabras
+ type word_array is array (0 to BLOCK_SIZE-1) of STD_LOGIC_VECTOR(WORD_SIZE-1 downto 0);
+ type cache_block is record
+     valid : STD_LOGIC;
+     tag   : STD_LOGIC_VECTOR(TAG_BITS-1 downto 0);
+     data  : word_array;
+ end record;
+ type cache_array is array (0 to CACHE_SIZE-1) of cache_block;
+
+ -- la cache se trata como una maquina de estados, estos son sus posibles estados:
+ -- idle: espera a que la cpu habilite una operacion
+ -- check_hit: revisa si hay hit
+ -- read_miss: lee un bloque desde la ram
+ -- allocate: carga un bloque a cache
+ type state_type is (IDLE, CHECK_HIT, READ_MISS, ALLOCATE);
+
+ -- señales internas
+ signal cache_mem : cache_array;
+ signal current_state, next_state : state_type;
+
+ -- asi se decodifica la direccion:
+ signal addr_tag    : STD_LOGIC_VECTOR(TAG_BITS-1 downto 0); -- tag de la direccion
+ signal addr_index  : STD_LOGIC_VECTOR(INDEX_BITS-1 downto 0); -- indice de la direccion
+ signal addr_offset : STD_LOGIC_VECTOR(OFFSET_BITS-1 downto 0); -- offset de la direccion
+
+ signal hit_detected : STD_LOGIC; -- señal que indica que hubo un hit
+ signal miss_detected : STD_LOGIC; -- señal que indica que hubo un miss
+ signal current_block : cache_block; -- bloque actual
+ signal index_int : integer range 0 to CACHE_SIZE-1; -- indice para identificar el bloque de cache a acceder
+ signal offset_int : integer range 0 to BLOCK_SIZE-1; -- indice para identificar la palabra dentro de ese bloque a acceder
+
+ -- se usa para calcular la direccion de inicio del bloque de 8 palabras para acceder de forma secuencial a ellas
+ signal block_initial_addr: STD_LOGIC_VECTOR(13 downto 0);
+
+ -- contador para operaciones de bloque
+ -- se extiende en 2 para dar tiempo a la última palabra
+ signal word_counter : integer range 0 to BLOCK_SIZE + 2;
+
+ -- Buffer temporal para lectura
+ signal read_data_buffer : word_array; -- buffer en donde se concatenan las 8 palabras de la ram para enviarlas a la cache
+ signal ram_read_internal : STD_LOGIC; -- señal para controlar lecturas en la ram
+
+ -- convertir std_logic_vector a string para despues imprimirlo (debuggeo)
+ function slv_to_string(slv : STD_LOGIC_VECTOR) return string is
+     variable result : string(1 to slv'length);
+     variable r : integer := 1;
+ begin
+     for i in slv'range loop
+         if slv(i) = '1' then
+             result(r) := '1';
+         else
+             result(r) := '0';
+         end if;
+         r := r + 1;
+     end loop;
+     return result;
+ end function;
 
 begin
-    
-    -- Decodificación de dirección
-    addr_tag    &lt;= cpu_addr(13 downto 7);
-    addr_index  &lt;= cpu_addr(6 downto 3);
-    addr_offset &lt;= cpu_addr(2 downto 0);
-    
-    index_int &lt;= to_integer(unsigned(addr_index));
-    offset_int &lt;= to_integer(unsigned(addr_offset));
-    current_block &lt;= cache_mem(index_int);
-    
-    -- Calcular dirección base del bloque (eliminar offset para alinear)
-    block_base_addr &lt;= addr_tag &amp; addr_index &amp; "000";
-    
-    -- Detección de hit/miss
-    hit_detected &lt;= '1' when (current_block.valid = '1' and 
-                             current_block.tag = addr_tag) else '0';
-    miss_detected &lt;= not hit_detected;
-    
-    -- Asignación de salidas
-    cache_hit &lt;= hit_detected when current_state = CHECK_HIT else '0';
-    cache_miss &lt;= miss_detected when current_state = CHECK_HIT else '0';
-    busy &lt;= '1' when current_state /= IDLE else '0';
-    ram_read &lt;= ram_read_internal;
-    
-    -- Máquina de estados - transiciones
-    process(clk, reset)
-    begin
-        if reset = '1' then
-            current_state &lt;= IDLE;
-            word_counter &lt;= 0;
-        elsif rising_edge(clk) then
-            current_state &lt;= next_state;
-            
-            -- Manejo del contador
-            if current_state = READ_MISS then
-                if word_counter &lt; BLOCK_SIZE + 1 then
-                    word_counter &lt;= word_counter + 1;
-                else
-                    word_counter &lt;= 0;
-                end if;
-            else
-                word_counter &lt;= 0;
-            end if;
-        end if;
-    end process;
-    
-    -- Lógica de siguiente estado (simplificada)
-    process(current_state, cpu_enable, cpu_read, hit_detected, 
-            miss_detected, word_counter)
-    begin
-        case current_state is
-            when IDLE =&gt;
-                if cpu_enable = '1' and cpu_read = '1' then
-                    next_state &lt;= CHECK_HIT;
-                else
-                    next_state &lt;= IDLE;
-                end if;
-                
-            when CHECK_HIT =&gt;
-                if hit_detected = '1' then
-                    next_state &lt;= IDLE;
-                elsif miss_detected = '1' then
-                    next_state &lt;= READ_MISS;
-                else
-                    next_state &lt;= IDLE;
-                end if;
-                
-            when READ_MISS =&gt;
-                if word_counter &gt;= BLOCK_SIZE + 1 then
-                    next_state &lt;= ALLOCATE;
-                else
-                    next_state &lt;= READ_MISS;
-                end if;
-                
-            when ALLOCATE =&gt;
-                next_state &lt;= IDLE;
-                
-            when others =&gt;
-                next_state &lt;= IDLE;
-        end case;
-    end process;
-    
-    -- Lógica principal de la cache (solo lectura)
-    process(clk, reset)
-        variable temp_block : cache_block;
-        variable line : line;
-    begin
-        if reset = '1' then
-            -- Inicializar cache
-            for i in 0 to CACHE_SIZE-1 loop
-                cache_mem(i).valid &lt;= '0';
-                cache_mem(i).tag &lt;= (others =&gt; '0');
-                for j in 0 to BLOCK_SIZE-1 loop
-                    cache_mem(i).data(j) &lt;= (others =&gt; '0');
-                end loop;
-            end loop;
-            
-            -- Inicializar buffer de lectura
-            for j in 0 to BLOCK_SIZE-1 loop
-                read_data_buffer(j) &lt;= (others =&gt; '0');
-            end loop;
-            
-            -- Inicializar señales de RAM
-            ram_addr &lt;= (others =&gt; '0');
-            ram_read_internal &lt;= '0';
-            cpu_instruction &lt;= (others =&gt; '0');
-            
-        elsif rising_edge(clk) then
-            
-            -- Default values
-            ram_read_internal &lt;= '0';
-            
-            case current_state is
-                when IDLE =&gt;
-                    ram_addr &lt;= (others =&gt; '0');
-                    
-                when CHECK_HIT =&gt;
-                    if hit_detected = '1' and cpu_read = '1' then
-                        -- Read hit - devolver instrucción
-                        cpu_instruction &lt;= current_block.data(offset_int);
-                        
-                        if monitor_enable = '1' then
-                            write(line, string'("INSTRUCTION CACHE HIT: Addr=0x"));
-                            write(line, slv_to_string(cpu_addr));
-                            write(line, string'(" Instruction=0x"));
-                            write(line, slv_to_string(current_block.data(offset_int)));
-                            writeline(output, line);
-                        end if;
-                    end if;
-                    
-                when READ_MISS =&gt;
-                    -- Leer bloque completo de instrucciones desde RAM
-                    if word_counter &lt; BLOCK_SIZE then
-                        -- CORREGIDO: usar dirección base del bloque + offset del contador
-                        ram_addr &lt;= std_logic_vector(unsigned(block_base_addr) + to_unsigned(word_counter, 14));
-                        ram_read_internal &lt;= '1';
-                        
-                        if monitor_enable = '1' then
-                            write(line, string'("REQUESTING INSTRUCTION: word "));
-                            write(line, word_counter);
-                            write(line, string'(" addr=0x"));
-                            write(line, slv_to_string(std_logic_vector(unsigned(block_base_addr) + to_unsigned(word_counter, 14))));
-                            writeline(output, line);
-                        end if;
-                    end if;
-                    
-                    -- Capturar datos con 2 ciclos de retraso
-                    if word_counter &gt;= 2 and word_counter &lt;= BLOCK_SIZE + 1 then
-                        read_data_buffer(word_counter - 2) &lt;= ram_data_in;
-                        
-                        if monitor_enable = '1' then
-                            write(line, string'("STORING INSTRUCTION: index="));
-                            write(line, word_counter - 2);
-                            write(line, string'(" data=0x"));
-                            write(line, slv_to_string(ram_data_in));
-                            writeline(output, line);
-                        end if;
-                    end if;
-                    
-                    if monitor_enable = '1' and word_counter = 0 then
-                        write(line, string'("INSTRUCTION CACHE MISS: Block "));
-                        write(line, index_int);
-                        write(line, string'(" Tag=0x"));
-                        write(line, slv_to_string(addr_tag));
-                        writeline(output, line);
-                    end if;
-                    
-                when ALLOCATE =&gt;
-                    -- Actualizar la cache con todas las instrucciones leídas
-                    temp_block := cache_mem(index_int);
-                    temp_block.data := read_data_buffer;
-                    temp_block.valid := '1';
-                    temp_block.tag := addr_tag;
-                    cache_mem(index_int) &lt;= temp_block;
-                    
-                    -- Proporcionar instrucción solicitada
-                    cpu_instruction &lt;= read_data_buffer(offset_int);
-                    
-                    if monitor_enable = '1' then
-                        write(line, string'("INSTRUCTION CACHE ALLOCATED: Block "));
-                        write(line, index_int);
-                        write(line, string'(" Tag=0x"));
-                        write(line, slv_to_string(addr_tag));
-                        write(line, string'(" Instructions loaded: "));
-                        write(line, BLOCK_SIZE);
-                        writeline(output, line);
-                    end if;
-                    
-                when others =&gt;
-                    null;
-            end case;
-        end if;
-    end process;
 
-end Behavioral;</vhdl>
+-- decodificar la direccion segun el esquema anterior
+ addr_tag    &lt;= cpu_address(13 downto 7);
+ addr_index  &lt;= cpu_address(6 downto 3);
+ addr_offset &lt;= cpu_address(2 downto 0);
+ index_int &lt;= to_integer(unsigned(addr_index));
+ offset_int &lt;= to_integer(unsigned(addr_offset));
+ current_block &lt;= cache_mem(index_int);
+
+ -- calcular la direccion de inicio del bloque
+ block_initial_addr&lt;= addr_tag &amp; addr_index &amp; "000";
+
+-- detectar hits y misses
+ hit_detected &lt;= '1' when (current_block.valid = '1' and -- hay hit si el bloque actual es valido y si el tag del bloque actual es igual al tag de la direccion
+                          current_block.tag = addr_tag) else '0';
+ miss_detected &lt;= not hit_detected; -- hay miss en caso contrario
+
+-- se activan algunas salidas
+ cache_hit &lt;= hit_detected when current_state = CHECK_HIT else '0'; -- se retorna que hubo hit en caso de haberlo
+ cache_miss &lt;= miss_detected when current_state = CHECK_HIT else '0'; -- se retorna miss en caso de haberlo
+ busy &lt;= '1' when current_state /= IDLE else '0'; -- se detecta busy si el estado no es IDLE
+ ram_read &lt;= ram_read_internal;
+
+-- proceso que establece como se haran los cambios de estado y la logica del contador de operaciones de bloque
+ process(clk, reset)
+ begin
+      -- si la señal reset esta activada entonces todo se reinicia y el estado pasa a IDLE
+     if reset = '1' then
+         current_state &lt;= IDLE;
+         word_counter &lt;= 0;
+    -- si no hay reset, con cada relojazo cambia el estado
+     elsif rising_edge(clk) then
+         current_state &lt;= next_state;
+      
+        -- logica del contador de operaciones de bloque
+         if current_state = READ_MISS then
+             if word_counter &lt; BLOCK_SIZE + 1 then
+                 word_counter &lt;= word_counter + 1;
+             else
+                 word_counter &lt;= 0;
+             end if;
+         else
+             word_counter &lt;= 0;
+         end if;
+     end if;
+ end process;
+
+-- proceso que se encarga de los cambios entre estados
+ process(current_state, cpu_enable, cpu_read, hit_detected,
+         miss_detected, word_counter)
+ begin
+     case current_state is
+          -- si el estado actual es IDLE, solo pasa a CHECK_HIT si la señal de leer en memoria esta activada y está activada la señal de operaciones en memoria
+         when IDLE =&gt;
+             if cpu_enable = '1' and cpu_read = '1' then
+                 next_state &lt;= CHECK_HIT;
+             else
+                 next_state &lt;= IDLE;
+             end if;
+        -- si el estado es CHECK_HIT pasa a READ_MISS si hay un miss  y pasa a IDLE si hay un hit
+        -- en cualquier otro caso para a IDLE
+         when CHECK_HIT =&gt;
+             if hit_detected = '1' then
+                 next_state &lt;= IDLE;
+             elsif miss_detected = '1' then
+                 next_state &lt;= READ_MISS;
+             else
+                 next_state &lt;= IDLE;
+             end if;
+        -- si el estado actual es READ_MISS pasa a ALLOCATE si el contador de operaciones de bloque es mayor o igual al tamaño del bloque + 1, y se mantiene en READ_MISS en caso contrario
+         when READ_MISS =&gt;
+             if word_counter &gt;= BLOCK_SIZE + 1 then
+                 next_state &lt;= ALLOCATE;
+             else
+                 next_state &lt;= READ_MISS;
+             end if;
+        -- si el estado actual es ALLOCATE pasa a IDLE incondicionalmente
+         when ALLOCATE =&gt;
+             next_state &lt;= IDLE;
+        -- el estado por defecto es IDLE
+         when others =&gt;
+             next_state &lt;= IDLE;
+     end case;
+ end process;
+
+-- proceso que se encarga de la logica de cada estado
+ process(clk, reset)
+     variable temp_block : cache_block;
+     variable line : line;
+ begin
+     if reset = '1' then
+         -- Inicializar todos los datos
+         for i in 0 to CACHE_SIZE-1 loop
+             cache_mem(i).valid &lt;= '0';
+             cache_mem(i).tag &lt;= (others =&gt; '0');
+             for j in 0 to BLOCK_SIZE-1 loop
+                 cache_mem(i).data(j) &lt;= (others =&gt; '0');
+             end loop;
+         end loop;
+         for j in 0 to BLOCK_SIZE-1 loop
+             read_data_buffer(j) &lt;= (others =&gt; '0');
+         end loop;
+         ram_address &lt;= (others =&gt; '0');
+         ram_read_internal &lt;= '0';
+         cpu_instruction &lt;= (others =&gt; '0');
+     elsif rising_edge(clk) then
+         ram_read_internal &lt;= '0';
+      
+         case current_state is
+             -- logica del estado IDLE
+             when IDLE =&gt;
+                -- no pasa nada
+                 ram_address &lt;= (others =&gt; '0');
+            -- logica del estado CHECK_HIT
+             when CHECK_HIT =&gt;
+                -- si hay hit y esta activada la bandera de lectura de memoria se devuelve el dato que indique el indice
+                 if hit_detected = '1' and cpu_read = '1' then
+                     cpu_instruction &lt;= current_block.data(offset_int);
+                     -- prints
+                     if monitor_enable = '1' then
+                         write(line, string'("Estado CHECK_HIT, direccion "));
+                         write(line, slv_to_string(cpu_address));
+                         write(line, string'(" Instruccion "));
+                         write(line, slv_to_string(current_block.data(offset_int)));
+                         writeline(output, line);
+                     end if;
+                 end if;
+            -- logica del estado READ_MISS
+             when READ_MISS =&gt;
+                 if word_counter &lt; BLOCK_SIZE then
+                     -- se piden las 8 palabras a la ram
+                     ram_address &lt;= std_logic_vector(unsigned(block_initial_addr) + to_unsigned(word_counter, 14));
+                     ram_read_internal &lt;= '1';
+                    -- prints
+                     if monitor_enable = '1' then
+                         write(line, string'("Estado READ_MISS, pidiendo palabra "));
+                         write(line, word_counter);
+                         write(line, string'(" direccion "));
+                         write(line, slv_to_string(std_logic_vector(unsigned(block_initial_addr) + to_unsigned(word_counter, 14))));
+                         writeline(output, line);
+                     end if;
+                 end if;
+              
+                -- traer datos con 2 ciclos de retraso
+                -- la ram tarda 2 ciclos en traer los datos, entonces por eso hay un retraso
+                 if word_counter &gt;= 2 and word_counter &lt;= BLOCK_SIZE + 1 then
+                     read_data_buffer(word_counter - 2) &lt;= ram_data_to_write;
+                  
+                     if monitor_enable = '1' then
+                         write(line, string'("Almacenando indice "));
+                         write(line, word_counter - 2);
+                         write(line, string'(" instruccion "));
+                         write(line, slv_to_string(ram_data_to_write));
+                         writeline(output, line);
+                     end if;
+                 end if;
+              
+                 if monitor_enable = '1' and word_counter = 0 then
+                     write(line, string'("Leyendo bloque "));
+                     write(line, index_int);
+                     write(line, string'(" Tag "));
+                     write(line, slv_to_string(addr_tag));
+                     writeline(output, line);
+                 end if;
+            -- logica del estado ALLOCATE
+             when ALLOCATE =&gt;
+                -- se carga lo que haya en el buffer en el bloque de la cache correspondiente
+                 temp_block := cache_mem(index_int);
+                 temp_block.data := read_data_buffer;
+                -- se actualizan los valid, dirty y tag bit
+                 temp_block.valid := '1';
+                 temp_block.tag := addr_tag;
+                 cache_mem(index_int) &lt;= temp_block;
+              
+                 -- retornar la instruccion solicitada
+                 cpu_instruction &lt;= read_data_buffer(offset_int);
+                 -- prints
+                 if monitor_enable = '1' then
+                     write(line, string'("Estado ALLOCATE: Bloque "));
+                     write(line, index_int);
+                     write(line, string'(" Tag "));
+                     write(line, slv_to_string(addr_tag));
+                     write(line, string'(" Instrucciones "));
+                     write(line, BLOCK_SIZE);
+                     writeline(output, line);
+                 end if;
+              
+             when others =&gt;
+                 null;
+         end case;
+     end if;
+ end process;
+
+end Behavioral;
+
+
+</vhdl>
 </project>
