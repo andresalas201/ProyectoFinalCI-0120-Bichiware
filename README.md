@@ -1,11 +1,5 @@
 # Formato de instrucciones
 
-## Aclaraciones
-
-Nuestro instruccion set solo necesita 5 bits, pero igual se seguirá el sistema normal de RISC-V por simplicidad, solamente alterando la cantidad de bits usados para opCode
-
-![alt text](image.png)
-
 ![alt text](inst2.png)
 
 ## R-Type
@@ -79,20 +73,6 @@ Para las operaciones beq y bne
     20-31   12 bits del offset
 
 
-# Instrucciones
-
-Instruccion| Tipo |
-|-|-|
-ADD | R
-SUB | R
-ADDi | I 
-AND | R
-OR | R
-XOR | R
-ANDi | I
-ORi | I
-XORi | I
-
 # Documentacion externa de componentes VHDL
 
 ## Componente ALU
@@ -128,3 +108,76 @@ Si la operacion es jalr se activa una bandera para saber desde el circuito si se
 Luego se calcula el retorno del jump sumandole 1 al pc actual y se retorna ese valor. Se calcula el offset completo sumandole al offset de jalr el valor del registro para el jalr.
 
 Se calcula el nuevo pc sumandole al pc actual el offset completo recien calculado y se retorna ese valor. Finalmente, se activa otra bandera para saber desde el circuito si hay que modificar el pc y se retorna esa bandera.
+
+## Componente cache_instrucciones
+
+
+Este componente simula una cache de instrucciones de mapeo directo con bloques de 8 palabras y 16 bloques, no contempla escrituras pues es un cache de instrucciones, es solo de lectura y en caso de miss de lectura hace allocate de los bloques faltantes. Las direcciones del circuito son de 14 bits, por conceso de grupo y limitaciones de logisim, por esto se dividen para la cache de la siguiente manera: tag de 7 bits, un índice de 4 bits y un offset de 3 bits.
+
+Funciona como una máquina de estados con los siguientes estados posibles:
+
+
+  - idle: espera a que la cpu habilite una operacion
+
+
+  - check_hit: revisa si hay hit
+
+
+  - read_miss: lee un bloque desde la ram
+
+
+  - allocate: carga un bloque a cache
+
+
+
+El proceso sería el siguiente: primero, verifica si hay una señal de reset, si sí pasa al estado idle, si no, va a ir pasando entre cada estado cada vez que llegue una señal de reloj. 
+
+
+El primer estado es el de revisar si hay hit, para esto se accede a la posicion en el arreglo que simula las lineas de cache segun los bits del indice y se toma como el bloque actual, se compara el tag de este con el tag de la direccion ingresada, si son iguales y el bit valid de el bloque actual esta en 1 (este bit queda por la idea de coherencia de cache que no se implementa pero puede implementarse a futuro) entonces se detecta el hit y se activa la bandera hit_detected.
+
+Si es un hit, devuelve el dato solicitado si esta activada la bandera de lectura cpu_read. Si no se da esto se activa el miss_detected y se da un miss.
+
+
+En caso de Miss, pasa a READ_MISS donde se leen los datos desde memoria. Una vez leidos todos los bloques se pasa a ALLOCATE, que basicamente guarda la informacion en los arreglos internos.
+
+
+Esta caché escribe los datos en ella con 2 ciclos de retraso a su petición a la RAM, en otras palabras existe una latencia de 2 ciclos entre RAM y cache.
+
+
+## Componente cache_datos
+
+
+Este componente simula una cache de datos de mapeo directo con bloques de 4 palabras y 32 bloques, con las politicas Write Through y Write Allocate (con la intención de que fuera más fácil visualizar lo que ocurre en el flujo del circuito). Las direcciones del circuito son de 14 bits, por conceso de grupo y limitaciones de logisim, por esto se dividen para la cache de la siguiente manera: tag de 7 bits, un índice de 5 bits y un offset de 2 bits.
+
+Funciona como una máquina de estados con los siguientes estados posibles:
+    
+    
+   - idle: espera a que la cpu habilite una operacion
+
+   - check_hit: revisa si hay hit
+
+   - read_miss: lee un bloque desde la ram
+   
+   - write_back: escribe un bloque sucio en la ram antes de escribir
+
+   - allocate: carga un bloque a cache
+
+   - write_through: escribe en cache y en la ram
+
+
+
+El proceso sería el siguiente: primero, verifica si hay una señal de reset, si sí pasa al estado idle, si no, va a ir pasando entre cada estado cada vez que llegue una señal de reloj. 
+
+
+El primer estado es el de revisar si hay hit, para esto se accede a la posicion en el arreglo que simula las lineas de cache segun los bits del indice y se toma como el bloque actual, se compara el tag de este con el tag de la direccion ingresada, si son iguales y el bit valid de el bloque actual esta en 1 (este bit queda por la idea de coherencia de cache que no se implementa pero puede implementarse a futuro) entonces se detecta el hit y se activa la bandera hit_detected.
+
+Si es un hit, se revisa si hay señal para escribir cpu_write, en caso de que la haya pasa a el estado WRITE_THROUGH, sino pasa a idle y devuelve el dato solicitado si esta activada la bandera de lectura cpu_read. Si no se da esto se activa el miss_detected y se da un miss.
+
+
+En caso de Miss, pasa a Write_Back si el bloque dice ser valido y sucio o a READ_MISS en el caso contrario. Write_Back se encarga de escribir en memoria, mientras tenga palabras que escribir no sale de este estado, una vez termina sale a READ_MISS. En READ_MISS se leen los datos desde memoria. Una vez leidos todos los bloques se pasa a ALLOCATE, que basicamente guarda la informacion en los arreglos internos. Write_Through pasa los datos para que sean escritos en la RAM.
+
+Esta caché escribe los datos en ella con 2 ciclos de retraso a su petición a la RAM, en otras palabras existe una latencia de 2 ciclos entre RAM y cache.
+
+
+
+# Análisis de costo del programa
