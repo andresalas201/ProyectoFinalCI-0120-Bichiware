@@ -178,6 +178,12 @@ En caso de Miss, pasa a Write_Back si el bloque dice ser valido y sucio o a READ
 
 Esta caché escribe los datos en ella con 3 ciclos de retraso a su petición a la RAM, en otras palabras existe una latencia de 3 ciclos entre RAM y cache.
 
+## Componente address_balancer
+
+Este componente se asegura de que los 2 cores accedan a puntos diferentes de la memoria ram, esto lo logra recibiendo como input el address de memoria que sale de cada core, al entrar simplemente se altera su bit 12, el core 1 tiene un 0 y el core 2 un 1, de esta manera se subdividen las direcciones en 2, evitando completamente que un core acceda a la memoria de otro, tanto instrucciones como datos.
+
+Este cambio es el equivalente del circuito del cambio entre direcciones virtuales y fisicas, en este caso el unico cambio importante ocurre para el core 2, por ejemplo: Si el core 2 pide leer la posicion de memoria 0, en realidad se leera la posicion 1000h, esto debido a la conversión generada por address_balancer
+
 
 
 # Análisis de costo del programa

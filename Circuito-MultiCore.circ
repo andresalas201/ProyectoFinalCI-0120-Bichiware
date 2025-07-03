@@ -69,7 +69,7 @@
       <a name="label" val="Destiny"/>
       <a name="width" val="2"/>
     </comp>
-    <comp lib="0" loc="(2070,50)" name="Tunnel">
+    <comp lib="0" loc="(2070,20)" name="Tunnel">
       <a name="facing" val="east"/>
       <a name="label" val="Addr1"/>
       <a name="width" val="14"/>
@@ -342,7 +342,7 @@
     <wire from="(2050,340)" to="(2110,340)"/>
     <wire from="(2060,250)" to="(2060,260)"/>
     <wire from="(2060,250)" to="(2110,250)"/>
-    <wire from="(2070,50)" to="(2180,50)"/>
+    <wire from="(2070,20)" to="(2210,20)"/>
     <wire from="(2070,80)" to="(2220,80)"/>
     <wire from="(2080,280)" to="(2080,310)"/>
     <wire from="(2080,310)" to="(2110,310)"/>
@@ -364,8 +364,6 @@
     <wire from="(2110,540)" to="(2120,540)"/>
     <wire from="(2160,700)" to="(2190,700)"/>
     <wire from="(2170,110)" to="(2200,110)"/>
-    <wire from="(2180,20)" to="(2180,50)"/>
-    <wire from="(2180,20)" to="(2210,20)"/>
     <wire from="(2180,230)" to="(2180,400)"/>
     <wire from="(2180,230)" to="(2300,230)"/>
     <wire from="(2180,430)" to="(2180,470)"/>
@@ -7696,66 +7694,25 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity address_balancer is
     Port ( 
-        addrC1 : in STD_LOGIC_VECTOR (13 downto 0);
-        addrC2 : in STD_LOGIC_VECTOR (13 downto 0);
-        finalAddrC1 : out STD_LOGIC_VECTOR (13 downto 0);
-        finalAddrC2 : out STD_LOGIC_VECTOR (13 downto 0)
+        addrC1 : in STD_LOGIC_VECTOR (13 downto 0); -- Address virtual que viene de core 1
+        addrC2 : in STD_LOGIC_VECTOR (13 downto 0); -- Address virtual que viene de core 2
+        finalAddrC1 : out STD_LOGIC_VECTOR (13 downto 0); -- Address fisico de core 1
+        finalAddrC2 : out STD_LOGIC_VECTOR (13 downto 0) -- Address fisico de core 2
     );
 end address_balancer;
 
 architecture Behavioral of address_balancer is
-    -- Signals for addrC1 processing
-    signal quotient1 : unsigned(10 downto 0);  -- 14-bit / 8 = max 11 bits
-    signal quotient1_lsb : std_logic;
-    signal addrC1_unsigned : unsigned(13 downto 0);
-    signal result1 : unsigned(13 downto 0);
-    
-    -- Signals for addrC2 processing
-    signal quotient2 : unsigned(10 downto 0);  -- 14-bit / 8 = max 11 bits
-    signal quotient2_lsb : std_logic;
-    signal addrC2_unsigned : unsigned(13 downto 0);
-    signal result2 : unsigned(13 downto 0);
 begin
-    -- Convert inputs to unsigned
-    addrC1_unsigned &lt;= unsigned(addrC1);
-    addrC2_unsigned &lt;= unsigned(addrC2);
-    
-    -- Division by 8 for both inputs (right shift by 3)
-    quotient1 &lt;= addrC1_unsigned(13 downto 3);
-    quotient2 &lt;= addrC2_unsigned(13 downto 3);
-    
-    -- Check if quotients are odd (LSB = '1')
-    quotient1_lsb &lt;= quotient1(0);
-    quotient2_lsb &lt;= quotient2(0);
-    
-    -- Conditional addition process for addrC1 (add 8 if odd quotient)
-    process(addrC1_unsigned, quotient1_lsb)
+    -- Metodo para convertir direccion virtual a fisica
+    process(addrC1, addrC2)
     begin
-        if quotient1_lsb = '1' then
-            -- Quotient is odd, add 8 to input
-            result1 &lt;= addrC1_unsigned + 8;
-        else
-            -- Quotient is even, output input unchanged
-            result1 &lt;= addrC1_unsigned;
-        end if;
+        
+        -- Crea finalAddrC1: bit 13 y 11-0 no cambian, bit 12 = 0 
+        finalAddrC1 &lt;= addrC1(13) &amp; '0' &amp; addrC1(11 downto 0);
+        
+        -- Crea finalAddrC2: bit 13 y 11-0 no cambian, bit 12 = 1
+        finalAddrC2 &lt;= addrC2(13) &amp; '1' &amp; addrC2(11 downto 0);
     end process;
     
-    -- Conditional addition process for addrC2 (add 8 if even quotient)
-    process(addrC2_unsigned, quotient2_lsb)
-    begin
-        if quotient2_lsb = '0' then
-            -- Quotient is even, add 8 to input
-            result2 &lt;= addrC2_unsigned + 8;
-        else
-            -- Quotient is odd, output input unchanged
-            result2 &lt;= addrC2_unsigned;
-        end if;
-    end process;
-    
-    -- Convert results back to std_logic_vector
-    finalAddrC1 &lt;= std_logic_vector(result1);
-    finalAddrC2 &lt;= std_logic_vector(result2);
-
-end Behavioral;
-</vhdl>
+end Behavioral;</vhdl>
 </project>
