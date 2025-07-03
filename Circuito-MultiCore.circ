@@ -7467,8 +7467,8 @@ architecture Behavioral of cache_instrucciones is
  signal block_initial_addr: STD_LOGIC_VECTOR(13 downto 0);
 
  -- contador para operaciones de bloque
- -- se extiende en 2 para dar tiempo a la última palabra
- signal word_counter : integer range 0 to BLOCK_SIZE + 2;
+ -- se extiende en 3 para dar tiempo a la última palabra
+ signal word_counter : integer range 0 to BLOCK_SIZE + 3;
 
  -- Buffer temporal para lectura
  signal read_data_buffer : word_array; -- buffer en donde se concatenan las 8 palabras de la ram para enviarlas a la cache
@@ -7527,7 +7527,7 @@ begin
       
         -- logica del contador de operaciones de bloque
          if current_state = READ_MISS then
-             if word_counter &lt; BLOCK_SIZE + 1 then
+             if word_counter &lt; BLOCK_SIZE + 2 then
                  word_counter &lt;= word_counter + 1;
              else
                  word_counter &lt;= 0;
@@ -7560,9 +7560,9 @@ begin
              else
                  next_state &lt;= IDLE;
              end if;
-        -- si el estado actual es READ_MISS pasa a ALLOCATE si el contador de operaciones de bloque es mayor o igual al tamaño del bloque + 1, y se mantiene en READ_MISS en caso contrario
+        -- si el estado actual es READ_MISS pasa a ALLOCATE si el contador de operaciones de bloque es mayor o igual al tamaño del bloque + 2, y se mantiene en READ_MISS en caso contrario
          when READ_MISS =&gt;
-             if word_counter &gt;= BLOCK_SIZE + 1 then
+             if word_counter &gt;= BLOCK_SIZE + 2 then
                  next_state &lt;= ALLOCATE;
              else
                  next_state &lt;= READ_MISS;
@@ -7618,7 +7618,7 @@ begin
                          writeline(output, line);
                      end if;
                  end if;
-            -- logica del estado READ_MISS
+            -- logica del estado read_MISS
              when READ_MISS =&gt;
                  if word_counter &lt; BLOCK_SIZE then
                      -- se piden las 8 palabras a la ram
@@ -7634,14 +7634,14 @@ begin
                      end if;
                  end if;
               
-                -- traer datos con 2 ciclos de retraso
-                -- la ram tarda 2 ciclos en traer los datos, entonces por eso hay un retraso
-                 if word_counter &gt;= 2 and word_counter &lt;= BLOCK_SIZE + 1 then
-                     read_data_buffer(word_counter - 2) &lt;= ram_data_to_write;
+                -- traer datos con 3 ciclos de retraso
+                -- la ram tarda 3 ciclos en traer los datos, entonces por eso hay un retraso
+                 if word_counter &gt;= 3 and word_counter &lt;= BLOCK_SIZE + 2 then
+                     read_data_buffer(word_counter - 3) &lt;= ram_data_to_write;
                   
                      if monitor_enable = '1' then
                          write(line, string'("Almacenando indice "));
-                         write(line, word_counter - 2);
+                         write(line, word_counter - 3);
                          write(line, string'(" instruccion "));
                          write(line, slv_to_string(ram_data_to_write));
                          writeline(output, line);
@@ -7684,10 +7684,7 @@ begin
      end if;
  end process;
 
-end Behavioral;
-
-
-</vhdl>
+end Behavioral;</vhdl>
   <vhdl name="address_balancer">library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
