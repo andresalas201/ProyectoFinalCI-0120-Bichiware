@@ -69,6 +69,16 @@
       <a name="label" val="Destiny"/>
       <a name="width" val="2"/>
     </comp>
+    <comp lib="0" loc="(2070,50)" name="Tunnel">
+      <a name="facing" val="east"/>
+      <a name="label" val="Addr1"/>
+      <a name="width" val="14"/>
+    </comp>
+    <comp lib="0" loc="(2070,80)" name="Tunnel">
+      <a name="facing" val="east"/>
+      <a name="label" val="Addr2"/>
+      <a name="width" val="14"/>
+    </comp>
     <comp lib="0" loc="(2110,250)" name="Tunnel">
       <a name="label" val="Addr1"/>
       <a name="width" val="14"/>
@@ -97,6 +107,10 @@
       <a name="label" val="Data2"/>
       <a name="width" val="32"/>
     </comp>
+    <comp lib="0" loc="(2170,110)" name="Tunnel">
+      <a name="facing" val="east"/>
+      <a name="label" val="clk"/>
+    </comp>
     <comp lib="0" loc="(2480,390)" name="Splitter">
       <a name="facing" val="west"/>
     </comp>
@@ -107,16 +121,6 @@
     <comp lib="0" loc="(2490,250)" name="Tunnel">
       <a name="facing" val="east"/>
       <a name="label" val="ES2"/>
-    </comp>
-    <comp lib="0" loc="(2500,100)" name="Tunnel">
-      <a name="facing" val="east"/>
-      <a name="label" val="Addr2"/>
-      <a name="width" val="14"/>
-    </comp>
-    <comp lib="0" loc="(2500,70)" name="Tunnel">
-      <a name="facing" val="east"/>
-      <a name="label" val="Addr1"/>
-      <a name="width" val="14"/>
     </comp>
     <comp lib="0" loc="(2530,390)" name="Tunnel">
       <a name="facing" val="east"/>
@@ -168,14 +172,18 @@
     </comp>
     <comp lib="1" loc="(1980,650)" name="AND Gate">
       <a name="facing" val="west"/>
-      <a name="inputs" val="3"/>
     </comp>
     <comp lib="1" loc="(2060,700)" name="OR Gate">
       <a name="facing" val="west"/>
+      <a name="inputs" val="3"/>
       <a name="size" val="30"/>
     </comp>
     <comp lib="1" loc="(2070,670)" name="NOT Gate">
       <a name="facing" val="west"/>
+    </comp>
+    <comp lib="1" loc="(2140,700)" name="NOT Gate">
+      <a name="facing" val="west"/>
+      <a name="size" val="20"/>
     </comp>
     <comp lib="1" loc="(2180,430)" name="NOT Gate">
       <a name="facing" val="south"/>
@@ -206,6 +214,14 @@
     </comp>
     <comp lib="2" loc="(2610,80)" name="Multiplexer">
       <a name="select" val="2"/>
+      <a name="width" val="14"/>
+    </comp>
+    <comp lib="4" loc="(2240,20)" name="Register">
+      <a name="appearance" val="classic"/>
+      <a name="width" val="14"/>
+    </comp>
+    <comp lib="4" loc="(2250,80)" name="Register">
+      <a name="appearance" val="classic"/>
       <a name="width" val="14"/>
     </comp>
     <comp lib="4" loc="(2300,200)" name="Register">
@@ -251,6 +267,9 @@
     </comp>
     <comp loc="(2040,230)" name="Core">
       <a name="label" val="Core1"/>
+    </comp>
+    <comp loc="(2520,60)" name="address_balancer">
+      <a name="appearance" val="logisim_evolution"/>
     </comp>
     <wire from="(1500,320)" to="(1540,320)"/>
     <wire from="(1510,260)" to="(1540,260)"/>
@@ -323,6 +342,8 @@
     <wire from="(2050,340)" to="(2110,340)"/>
     <wire from="(2060,250)" to="(2060,260)"/>
     <wire from="(2060,250)" to="(2110,250)"/>
+    <wire from="(2070,50)" to="(2180,50)"/>
+    <wire from="(2070,80)" to="(2220,80)"/>
     <wire from="(2080,280)" to="(2080,310)"/>
     <wire from="(2080,310)" to="(2110,310)"/>
     <wire from="(2090,170)" to="(2090,230)"/>
@@ -332,29 +353,45 @@
     <wire from="(2090,540)" to="(2090,570)"/>
     <wire from="(2090,570)" to="(2120,570)"/>
     <wire from="(2090,690)" to="(2180,690)"/>
+    <wire from="(2090,700)" to="(2140,700)"/>
     <wire from="(2090,710)" to="(2370,710)"/>
     <wire from="(2100,490)" to="(2100,630)"/>
-    <wire from="(2100,490)" to="(2200,490)"/>
+    <wire from="(2100,490)" to="(2190,490)"/>
     <wire from="(2100,670)" to="(2250,670)"/>
     <wire from="(2110,500)" to="(2110,510)"/>
     <wire from="(2110,510)" to="(2120,510)"/>
     <wire from="(2110,520)" to="(2110,540)"/>
     <wire from="(2110,540)" to="(2120,540)"/>
+    <wire from="(2160,700)" to="(2190,700)"/>
+    <wire from="(2170,110)" to="(2200,110)"/>
+    <wire from="(2180,20)" to="(2180,50)"/>
+    <wire from="(2180,20)" to="(2210,20)"/>
     <wire from="(2180,230)" to="(2180,400)"/>
     <wire from="(2180,230)" to="(2300,230)"/>
     <wire from="(2180,430)" to="(2180,470)"/>
     <wire from="(2180,470)" to="(2180,690)"/>
     <wire from="(2180,470)" to="(2200,470)"/>
+    <wire from="(2190,490)" to="(2190,700)"/>
+    <wire from="(2190,490)" to="(2200,490)"/>
+    <wire from="(2200,110)" to="(2230,110)"/>
+    <wire from="(2200,50)" to="(2200,110)"/>
+    <wire from="(2200,50)" to="(2220,50)"/>
     <wire from="(2220,130)" to="(2220,250)"/>
     <wire from="(2220,250)" to="(2220,380)"/>
     <wire from="(2220,250)" to="(2300,250)"/>
+    <wire from="(2220,40)" to="(2220,50)"/>
     <wire from="(2220,410)" to="(2220,440)"/>
     <wire from="(2220,440)" to="(2370,440)"/>
+    <wire from="(2230,100)" to="(2230,110)"/>
     <wire from="(2230,480)" to="(2300,480)"/>
+    <wire from="(2240,20)" to="(2260,20)"/>
     <wire from="(2250,380)" to="(2360,380)"/>
     <wire from="(2250,410)" to="(2250,510)"/>
     <wire from="(2250,510)" to="(2250,670)"/>
     <wire from="(2250,510)" to="(2300,510)"/>
+    <wire from="(2250,80)" to="(2300,80)"/>
+    <wire from="(2260,20)" to="(2260,60)"/>
+    <wire from="(2260,60)" to="(2300,60)"/>
     <wire from="(2280,270)" to="(2280,530)"/>
     <wire from="(2280,270)" to="(2300,270)"/>
     <wire from="(2280,530)" to="(2280,730)"/>
@@ -374,14 +411,14 @@
     <wire from="(2480,280)" to="(2590,280)"/>
     <wire from="(2490,220)" to="(2570,220)"/>
     <wire from="(2490,250)" to="(2520,250)"/>
-    <wire from="(2500,100)" to="(2530,100)"/>
-    <wire from="(2500,70)" to="(2570,70)"/>
     <wire from="(2520,230)" to="(2520,250)"/>
     <wire from="(2520,230)" to="(2570,230)"/>
+    <wire from="(2520,60)" to="(2530,60)"/>
+    <wire from="(2520,80)" to="(2570,80)"/>
     <wire from="(2530,390)" to="(2560,390)"/>
     <wire from="(2530,420)" to="(2560,420)"/>
-    <wire from="(2530,80)" to="(2530,100)"/>
-    <wire from="(2530,80)" to="(2570,80)"/>
+    <wire from="(2530,60)" to="(2530,70)"/>
+    <wire from="(2530,70)" to="(2570,70)"/>
     <wire from="(2540,510)" to="(2550,510)"/>
     <wire from="(2540,540)" to="(2550,540)"/>
     <wire from="(2550,510)" to="(2550,520)"/>
@@ -484,9 +521,6 @@
       <a name="value" val="0x0"/>
       <a name="width" val="32"/>
     </comp>
-    <comp lib="0" loc="(1360,2030)" name="Tunnel">
-      <a name="label" val="MissD"/>
-    </comp>
     <comp lib="0" loc="(1390,180)" name="Pin">
       <a name="appearance" val="classic"/>
       <a name="facing" val="west"/>
@@ -578,6 +612,9 @@
     </comp>
     <comp lib="0" loc="(1670,1490)" name="Tunnel">
       <a name="label" val="branch_taken"/>
+    </comp>
+    <comp lib="0" loc="(1670,2030)" name="Tunnel">
+      <a name="label" val="MissD"/>
     </comp>
     <comp lib="0" loc="(1710,710)" name="Constant">
       <a name="value" val="0x0"/>
@@ -1963,6 +2000,10 @@
       <a name="label" val="mem_Resultado"/>
       <a name="width" val="32"/>
     </comp>
+    <comp lib="4" loc="(4330,1140)" name="Register">
+      <a name="appearance" val="logisim_evolution"/>
+      <a name="width" val="32"/>
+    </comp>
     <comp lib="4" loc="(4330,1260)" name="Register">
       <a name="appearance" val="logisim_evolution"/>
       <a name="label" val="return_address2"/>
@@ -2085,6 +2126,8 @@
     <wire from="(1030,1930)" to="(1060,1930)"/>
     <wire from="(1030,1990)" to="(1030,2010)"/>
     <wire from="(1030,1990)" to="(1060,1990)"/>
+    <wire from="(1040,1740)" to="(1040,1780)"/>
+    <wire from="(1040,1740)" to="(1820,1740)"/>
     <wire from="(1040,1780)" to="(1040,1850)"/>
     <wire from="(1040,1850)" to="(1060,1850)"/>
     <wire from="(1040,1950)" to="(1040,1980)"/>
@@ -2170,7 +2213,7 @@
     <wire from="(1320,1170)" to="(1400,1170)"/>
     <wire from="(1320,1970)" to="(1320,2030)"/>
     <wire from="(1320,1970)" to="(1340,1970)"/>
-    <wire from="(1320,2030)" to="(1360,2030)"/>
+    <wire from="(1320,2030)" to="(1670,2030)"/>
     <wire from="(1320,910)" to="(1320,940)"/>
     <wire from="(1320,910)" to="(1390,910)"/>
     <wire from="(1320,940)" to="(1340,940)"/>
@@ -2208,7 +2251,7 @@
     <wire from="(1460,960)" to="(1460,1090)"/>
     <wire from="(1460,960)" to="(1480,960)"/>
     <wire from="(1480,1610)" to="(1480,1630)"/>
-    <wire from="(1480,1610)" to="(1820,1610)"/>
+    <wire from="(1480,1610)" to="(2590,1610)"/>
     <wire from="(1480,1630)" to="(1500,1630)"/>
     <wire from="(150,1150)" to="(150,1170)"/>
     <wire from="(150,1150)" to="(190,1150)"/>
@@ -2305,8 +2348,7 @@
     <wire from="(1810,1560)" to="(1810,1590)"/>
     <wire from="(1810,1560)" to="(2010,1560)"/>
     <wire from="(1810,1590)" to="(1840,1590)"/>
-    <wire from="(1820,1610)" to="(1820,1840)"/>
-    <wire from="(1820,1610)" to="(2590,1610)"/>
+    <wire from="(1820,1740)" to="(1820,1840)"/>
     <wire from="(1820,1840)" to="(1820,1930)"/>
     <wire from="(1820,1840)" to="(1880,1840)"/>
     <wire from="(1820,1930)" to="(1820,2030)"/>
@@ -2322,7 +2364,7 @@
     <wire from="(1880,1070)" to="(1880,1130)"/>
     <wire from="(1880,1130)" to="(1910,1130)"/>
     <wire from="(1880,1860)" to="(1880,1950)"/>
-    <wire from="(1880,1860)" to="(1900,1860)"/>
+    <wire from="(1880,1860)" to="(1910,1860)"/>
     <wire from="(1880,1950)" to="(1930,1950)"/>
     <wire from="(1890,630)" to="(1940,630)"/>
     <wire from="(1890,640)" to="(1940,640)"/>
@@ -2895,9 +2937,11 @@
     <wire from="(4160,710)" to="(4460,710)"/>
     <wire from="(4160,780)" to="(4280,780)"/>
     <wire from="(4180,480)" to="(4230,480)"/>
-    <wire from="(4230,1170)" to="(4420,1170)"/>
-    <wire from="(4250,1090)" to="(4250,1310)"/>
+    <wire from="(4230,1170)" to="(4330,1170)"/>
+    <wire from="(4250,1090)" to="(4250,1190)"/>
     <wire from="(4250,1090)" to="(4320,1090)"/>
+    <wire from="(4250,1190)" to="(4250,1310)"/>
+    <wire from="(4250,1190)" to="(4330,1190)"/>
     <wire from="(4250,1310)" to="(4250,1420)"/>
     <wire from="(4250,1310)" to="(4330,1310)"/>
     <wire from="(4250,1420)" to="(4250,1530)"/>
@@ -2907,8 +2951,10 @@
     <wire from="(4250,800)" to="(4280,800)"/>
     <wire from="(4250,910)" to="(4250,1090)"/>
     <wire from="(4250,910)" to="(4290,910)"/>
-    <wire from="(4260,1130)" to="(4260,1350)"/>
+    <wire from="(4260,1130)" to="(4260,1230)"/>
     <wire from="(4260,1130)" to="(4350,1130)"/>
+    <wire from="(4260,1230)" to="(4260,1350)"/>
+    <wire from="(4260,1230)" to="(4360,1230)"/>
     <wire from="(4260,1350)" to="(4260,1490)"/>
     <wire from="(4260,1350)" to="(4360,1350)"/>
     <wire from="(4260,1490)" to="(4260,1640)"/>
@@ -2918,8 +2964,10 @@
     <wire from="(4260,840)" to="(4310,840)"/>
     <wire from="(4260,950)" to="(4260,1130)"/>
     <wire from="(4260,950)" to="(4320,950)"/>
-    <wire from="(4280,1110)" to="(4280,1330)"/>
+    <wire from="(4280,1110)" to="(4280,1210)"/>
     <wire from="(4280,1110)" to="(4320,1110)"/>
+    <wire from="(4280,1210)" to="(4280,1330)"/>
+    <wire from="(4280,1210)" to="(4330,1210)"/>
     <wire from="(4280,1330)" to="(4280,1440)"/>
     <wire from="(4280,1330)" to="(4330,1330)"/>
     <wire from="(4280,1440)" to="(4280,1610)"/>
@@ -2929,11 +2977,13 @@
     <wire from="(4280,930)" to="(4290,930)"/>
     <wire from="(4320,1400)" to="(4320,1470)"/>
     <wire from="(4320,1400)" to="(4340,1400)"/>
+    <wire from="(4330,1210)" to="(4340,1210)"/>
     <wire from="(4340,780)" to="(4450,780)"/>
     <wire from="(4350,890)" to="(4360,890)"/>
     <wire from="(4360,1350)" to="(4360,1360)"/>
     <wire from="(4370,1460)" to="(4370,1490)"/>
     <wire from="(4380,1070)" to="(4520,1070)"/>
+    <wire from="(4390,1170)" to="(4420,1170)"/>
     <wire from="(4390,1290)" to="(4690,1290)"/>
     <wire from="(4400,1400)" to="(4710,1400)"/>
     <wire from="(4420,1090)" to="(4420,1170)"/>
@@ -3170,9 +3220,6 @@
       <a name="value" val="0x0"/>
       <a name="width" val="32"/>
     </comp>
-    <comp lib="0" loc="(1360,2030)" name="Tunnel">
-      <a name="label" val="MissD"/>
-    </comp>
     <comp lib="0" loc="(1390,180)" name="Pin">
       <a name="appearance" val="classic"/>
       <a name="facing" val="west"/>
@@ -3264,6 +3311,9 @@
     </comp>
     <comp lib="0" loc="(1670,1490)" name="Tunnel">
       <a name="label" val="branch_taken"/>
+    </comp>
+    <comp lib="0" loc="(1670,2030)" name="Tunnel">
+      <a name="label" val="MissD"/>
     </comp>
     <comp lib="0" loc="(1710,710)" name="Constant">
       <a name="value" val="0x0"/>
@@ -4305,6 +4355,9 @@
     <comp lib="1" loc="(210,1100)" name="OR Gate">
       <a name="facing" val="north"/>
     </comp>
+    <comp lib="1" loc="(2120,2070)" name="OR Gate">
+      <a name="facing" val="north"/>
+    </comp>
     <comp lib="1" loc="(2130,720)" name="OR Gate">
       <a name="size" val="30"/>
     </comp>
@@ -4771,6 +4824,8 @@
     <wire from="(1030,1930)" to="(1060,1930)"/>
     <wire from="(1030,1990)" to="(1030,2010)"/>
     <wire from="(1030,1990)" to="(1060,1990)"/>
+    <wire from="(1040,1740)" to="(1040,1780)"/>
+    <wire from="(1040,1740)" to="(1820,1740)"/>
     <wire from="(1040,1780)" to="(1040,1850)"/>
     <wire from="(1040,1850)" to="(1060,1850)"/>
     <wire from="(1040,1950)" to="(1040,1980)"/>
@@ -4856,7 +4911,7 @@
     <wire from="(1320,1170)" to="(1400,1170)"/>
     <wire from="(1320,1970)" to="(1320,2030)"/>
     <wire from="(1320,1970)" to="(1340,1970)"/>
-    <wire from="(1320,2030)" to="(1360,2030)"/>
+    <wire from="(1320,2030)" to="(1650,2030)"/>
     <wire from="(1320,910)" to="(1320,940)"/>
     <wire from="(1320,910)" to="(1390,910)"/>
     <wire from="(1320,940)" to="(1340,940)"/>
@@ -4894,7 +4949,7 @@
     <wire from="(1460,960)" to="(1460,1090)"/>
     <wire from="(1460,960)" to="(1480,960)"/>
     <wire from="(1480,1610)" to="(1480,1630)"/>
-    <wire from="(1480,1610)" to="(1820,1610)"/>
+    <wire from="(1480,1610)" to="(2590,1610)"/>
     <wire from="(1480,1630)" to="(1500,1630)"/>
     <wire from="(150,1150)" to="(150,1170)"/>
     <wire from="(150,1150)" to="(190,1150)"/>
@@ -4947,6 +5002,9 @@
     <wire from="(1640,1490)" to="(1670,1490)"/>
     <wire from="(1640,860)" to="(1640,1240)"/>
     <wire from="(1640,860)" to="(2670,860)"/>
+    <wire from="(1650,2030)" to="(1650,2160)"/>
+    <wire from="(1650,2030)" to="(1670,2030)"/>
+    <wire from="(1650,2160)" to="(2100,2160)"/>
     <wire from="(1650,840)" to="(1650,1040)"/>
     <wire from="(1650,840)" to="(1670,840)"/>
     <wire from="(1660,1030)" to="(1660,1280)"/>
@@ -4991,8 +5049,7 @@
     <wire from="(1810,1560)" to="(1810,1590)"/>
     <wire from="(1810,1560)" to="(2010,1560)"/>
     <wire from="(1810,1590)" to="(1840,1590)"/>
-    <wire from="(1820,1610)" to="(1820,1840)"/>
-    <wire from="(1820,1610)" to="(2590,1610)"/>
+    <wire from="(1820,1740)" to="(1820,1840)"/>
     <wire from="(1820,1840)" to="(1820,1930)"/>
     <wire from="(1820,1840)" to="(1880,1840)"/>
     <wire from="(1820,1930)" to="(1820,2030)"/>
@@ -5008,7 +5065,7 @@
     <wire from="(1880,1070)" to="(1880,1130)"/>
     <wire from="(1880,1130)" to="(1910,1130)"/>
     <wire from="(1880,1860)" to="(1880,1950)"/>
-    <wire from="(1880,1860)" to="(1900,1860)"/>
+    <wire from="(1880,1860)" to="(1910,1860)"/>
     <wire from="(1880,1950)" to="(1930,1950)"/>
     <wire from="(1890,630)" to="(1940,630)"/>
     <wire from="(1890,640)" to="(1940,640)"/>
@@ -5074,7 +5131,7 @@
     <wire from="(2010,1560)" to="(2010,1570)"/>
     <wire from="(2010,1890)" to="(2100,1890)"/>
     <wire from="(2010,2050)" to="(2010,2070)"/>
-    <wire from="(2010,2070)" to="(2270,2070)"/>
+    <wire from="(2010,2070)" to="(2120,2070)"/>
     <wire from="(2010,250)" to="(2030,250)"/>
     <wire from="(2010,360)" to="(2030,360)"/>
     <wire from="(2020,1220)" to="(2020,1300)"/>
@@ -5106,16 +5163,20 @@
     <wire from="(210,1090)" to="(210,1100)"/>
     <wire from="(210,1090)" to="(230,1090)"/>
     <wire from="(2100,1540)" to="(2280,1540)"/>
+    <wire from="(2100,2120)" to="(2100,2160)"/>
     <wire from="(2100,670)" to="(2100,710)"/>
     <wire from="(2130,240)" to="(2600,240)"/>
     <wire from="(2130,350)" to="(2600,350)"/>
     <wire from="(2130,720)" to="(2140,720)"/>
+    <wire from="(2140,2120)" to="(2160,2120)"/>
     <wire from="(2140,710)" to="(2140,720)"/>
     <wire from="(2140,710)" to="(2160,710)"/>
     <wire from="(2140,720)" to="(2140,730)"/>
     <wire from="(2140,730)" to="(2160,730)"/>
     <wire from="(2150,1100)" to="(2150,1120)"/>
     <wire from="(2150,1120)" to="(2350,1120)"/>
+    <wire from="(2160,2070)" to="(2160,2120)"/>
+    <wire from="(2160,2070)" to="(2270,2070)"/>
     <wire from="(2160,750)" to="(2590,750)"/>
     <wire from="(2190,770)" to="(2190,820)"/>
     <wire from="(2190,820)" to="(2210,820)"/>
@@ -6276,6 +6337,8 @@
     <wire from="(1370,760)" to="(1450,760)"/>
     <wire from="(1370,890)" to="(1370,1030)"/>
     <wire from="(1370,890)" to="(1450,890)"/>
+    <wire from="(1390,1340)" to="(1390,1410)"/>
+    <wire from="(1390,1410)" to="(1420,1410)"/>
     <wire from="(1450,2640)" to="(1450,2650)"/>
     <wire from="(1480,1120)" to="(1550,1120)"/>
     <wire from="(1480,1250)" to="(1560,1250)"/>
@@ -6402,8 +6465,8 @@
     <wire from="(650,810)" to="(650,1470)"/>
     <wire from="(660,1460)" to="(1280,1460)"/>
     <wire from="(660,800)" to="(660,1460)"/>
-    <wire from="(670,1410)" to="(760,1410)"/>
-    <wire from="(670,790)" to="(670,1410)"/>
+    <wire from="(670,1340)" to="(1390,1340)"/>
+    <wire from="(670,790)" to="(670,1340)"/>
     <wire from="(680,2600)" to="(940,2600)"/>
     <wire from="(680,710)" to="(680,2600)"/>
     <wire from="(690,2460)" to="(940,2460)"/>
@@ -6534,7 +6597,6 @@
     <wire from="(910,760)" to="(970,760)"/>
     <wire from="(910,890)" to="(910,1030)"/>
     <wire from="(910,890)" to="(970,890)"/>
-    <wire from="(940,1410)" to="(1420,1410)"/>
     <wire from="(940,2440)" to="(950,2440)"/>
     <wire from="(940,740)" to="(950,740)"/>
     <wire from="(970,2640)" to="(970,2650)"/>
@@ -7031,8 +7093,8 @@ architecture Behavioral of cache_datos is
   signal offset_int : integer range 0 to BLOCK_SIZE-1; -- indice para identificar la palabra dentro de ese bloque a acceder
 
   -- contador para operaciones de bloque
-  -- se extiende en 2 para dar tiempo a la última palabra
-  signal word_counter : integer range 0 to BLOCK_SIZE + 2;
+  -- se extiende en 3 para dar tiempo a la última palabra (3 ciclos de retraso)
+  signal word_counter : integer range 0 to BLOCK_SIZE + 3;
 
   signal read_data_buffer : word_array; -- buffer en donde se concatenan las 4 palabras de la ram para enviarlas a la cache
   signal data_valid_flag : STD_LOGIC;  -- señal que indica si los datos son validos
@@ -7091,7 +7153,7 @@ begin
         
           -- logica del contador de operaciones de bloque
           if current_state = READ_MISS or current_state = WRITE_BACK then
-              if (current_state = READ_MISS and word_counter &lt; BLOCK_SIZE + 1) or
+              if (current_state = READ_MISS and word_counter &lt; BLOCK_SIZE + 2) or
                  (current_state = WRITE_BACK and word_counter &lt; BLOCK_SIZE) then
                   word_counter &lt;= word_counter + 1;
               else
@@ -7116,7 +7178,7 @@ begin
                   next_state &lt;= IDLE;
               end if;
           -- si el estado es CHECK_HIT pasa a WRITE_THOUGH si hay un hit y esta activada la señal de escritura en memoria y pasa a IDLE en caso contrario
-          -- para a WRITE_BACK si hay un miss y el bloque actual es valido y su dirty bit es 1, y pasa a READ_MISS en caso contrario
+          -- para a WRITE_BACK si hay un miss y el bloque actual es valido y su dirty bit es 1, y pasa a read_MISS en caso contrario
           -- en cualquier otro caso para a IDLE
           when CHECK_HIT =&gt;
               if hit_detected = '1' then
@@ -7134,16 +7196,16 @@ begin
               else
                   next_state &lt;= IDLE;
               end if;
-          -- si el estado actual es WRITE_BACK pasa a READ_MISS si el contador de operaciones de bloque es mayor o igual al tamaño del bloque, y se mantiene en WRITE_BACK en caso contrario
+          -- si el estado actual es WRITE_BACK pasa a read_MISS si el contador de operaciones de bloque es mayor o igual al tamaño del bloque, y se mantiene en WRITE_BACK en caso contrario
           when WRITE_BACK =&gt;
               if word_counter &gt;= BLOCK_SIZE then
                   next_state &lt;= READ_MISS;
               else
                   next_state &lt;= WRITE_BACK;
               end if;
-          -- si el estado actual es READ_MISS pasa a ALLOCATE si el contador de operaciones de bloque es mayor o igual al tamaño del bloque + 1, y se mantiene en READ_MISS en caso contrario
+          -- si el estado actual es READ_MISS pasa a ALLOCATE si el contador de operaciones de bloque es mayor o igual al tamaño del bloque + 2, y se mantiene en READ_MISS en caso contrario
           when READ_MISS =&gt;
-              if word_counter &gt;= BLOCK_SIZE + 1 then
+              if word_counter &gt;= BLOCK_SIZE + 2 then
                   next_state &lt;= ALLOCATE;
               else
                   next_state &lt;= READ_MISS;
@@ -7193,9 +7255,13 @@ begin
         
       elsif rising_edge(clk) then
         
+          -- Inicializar todas las salidas a 0 al inicio de cada ciclo
           ram_write &lt;= '0';
           ram_read_internal &lt;= '0';
           data_valid_flag &lt;= '0';
+          ram_address &lt;= (others =&gt; '0');
+          ram_return_data &lt;= (others =&gt; '0');
+          cpu_return_data &lt;= (others =&gt; '0');
         
           case current_state is
                -- logica del estado IDLE
@@ -7247,15 +7313,15 @@ begin
                       end if;
                   end if;
 
-                  -- traer datos con 2 ciclos de retraso
-                  -- la ram tarda 2 ciclos en traer los datos, entonces por eso hay un retraso
-                  if word_counter &gt;= 2 and word_counter &lt;= BLOCK_SIZE + 1 then
-                      read_data_buffer(word_counter - 2) &lt;= ram_data_to_write;
+                  -- traer datos con 3 ciclos de retraso
+                  -- la ram tarda 3 ciclos en traer los datos, entonces por eso hay un retraso
+                  if word_counter &gt;= 3 and word_counter &lt;= BLOCK_SIZE + 2 then
+                      read_data_buffer(word_counter - 3) &lt;= ram_data_to_write;
                       data_valid_flag &lt;= '1';
                       -- prints
                       if monitor_enable = '1' then
                           write(line, string'("Almacenando indice"));
-                          write(line, word_counter - 2);
+                          write(line, word_counter - 3);
                           write(line, string'(" dato "));
                           write(line, slv_to_string(ram_data_to_write));
                           writeline(output, line);
@@ -7322,17 +7388,14 @@ begin
                   end if;
                 
               when others =&gt;
-                  null;
+                  ram_address &lt;= (others =&gt; '0');
+                  ram_return_data &lt;= (others =&gt; '0');
+                  cpu_return_data &lt;= (others =&gt; '0');
           end case;
       end if;
   end process;
 
-end Behavioral;
-
-
-
-
-</vhdl>
+end Behavioral;</vhdl>
   <vhdl name="cache_instrucciones">library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
@@ -7626,5 +7689,73 @@ begin
 end Behavioral;
 
 
+</vhdl>
+  <vhdl name="address_balancer">library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+
+entity address_balancer is
+    Port ( 
+        addrC1 : in STD_LOGIC_VECTOR (13 downto 0);
+        addrC2 : in STD_LOGIC_VECTOR (13 downto 0);
+        finalAddrC1 : out STD_LOGIC_VECTOR (13 downto 0);
+        finalAddrC2 : out STD_LOGIC_VECTOR (13 downto 0)
+    );
+end address_balancer;
+
+architecture Behavioral of address_balancer is
+    -- Signals for addrC1 processing
+    signal quotient1 : unsigned(10 downto 0);  -- 14-bit / 8 = max 11 bits
+    signal quotient1_lsb : std_logic;
+    signal addrC1_unsigned : unsigned(13 downto 0);
+    signal result1 : unsigned(13 downto 0);
+    
+    -- Signals for addrC2 processing
+    signal quotient2 : unsigned(10 downto 0);  -- 14-bit / 8 = max 11 bits
+    signal quotient2_lsb : std_logic;
+    signal addrC2_unsigned : unsigned(13 downto 0);
+    signal result2 : unsigned(13 downto 0);
+begin
+    -- Convert inputs to unsigned
+    addrC1_unsigned &lt;= unsigned(addrC1);
+    addrC2_unsigned &lt;= unsigned(addrC2);
+    
+    -- Division by 8 for both inputs (right shift by 3)
+    quotient1 &lt;= addrC1_unsigned(13 downto 3);
+    quotient2 &lt;= addrC2_unsigned(13 downto 3);
+    
+    -- Check if quotients are odd (LSB = '1')
+    quotient1_lsb &lt;= quotient1(0);
+    quotient2_lsb &lt;= quotient2(0);
+    
+    -- Conditional addition process for addrC1 (add 8 if odd quotient)
+    process(addrC1_unsigned, quotient1_lsb)
+    begin
+        if quotient1_lsb = '1' then
+            -- Quotient is odd, add 8 to input
+            result1 &lt;= addrC1_unsigned + 8;
+        else
+            -- Quotient is even, output input unchanged
+            result1 &lt;= addrC1_unsigned;
+        end if;
+    end process;
+    
+    -- Conditional addition process for addrC2 (add 8 if even quotient)
+    process(addrC2_unsigned, quotient2_lsb)
+    begin
+        if quotient2_lsb = '0' then
+            -- Quotient is even, add 8 to input
+            result2 &lt;= addrC2_unsigned + 8;
+        else
+            -- Quotient is odd, output input unchanged
+            result2 &lt;= addrC2_unsigned;
+        end if;
+    end process;
+    
+    -- Convert results back to std_logic_vector
+    finalAddrC1 &lt;= std_logic_vector(result1);
+    finalAddrC2 &lt;= std_logic_vector(result2);
+
+end Behavioral;
 </vhdl>
 </project>

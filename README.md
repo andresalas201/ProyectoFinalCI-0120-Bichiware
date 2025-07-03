@@ -176,8 +176,24 @@ Si es un hit, se revisa si hay señal para escribir cpu_write, en caso de que la
 
 En caso de Miss, pasa a Write_Back si el bloque dice ser valido y sucio o a READ_MISS en el caso contrario. Write_Back se encarga de escribir en memoria, mientras tenga palabras que escribir no sale de este estado, una vez termina sale a READ_MISS. En READ_MISS se leen los datos desde memoria. Una vez leidos todos los bloques se pasa a ALLOCATE, que basicamente guarda la informacion en los arreglos internos. Write_Through pasa los datos para que sean escritos en la RAM.
 
-Esta caché escribe los datos en ella con 2 ciclos de retraso a su petición a la RAM, en otras palabras existe una latencia de 2 ciclos entre RAM y cache.
+Esta caché escribe los datos en ella con 3 ciclos de retraso a su petición a la RAM, en otras palabras existe una latencia de 3 ciclos entre RAM y cache.
 
 
 
 # Análisis de costo del programa
+El programa analizado es el resultante de cargar en la RAM los datos "instruccionesPrueba"
+
+
+## IC
+
+
+Este programa tiene un total de 22 instrucciones.
+
+## CPU Time
+
+
+
+## Analisis de distribucion de carga
+
+
+La distribucion de cargas se hace intercalando entre los núcleos, cada 8 instrucciones se cambia de nucleo por lo que el balance es de 50% de las tareas para cada unidad.
