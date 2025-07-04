@@ -202,4 +202,4 @@ Este programa tiene un total de 22 instrucciones.
 ## Analisis de distribucion de carga
 
 
-La distribucion de cargas se hace intercalando entre los núcleos, cada 8 instrucciones se cambia de nucleo por lo que el balance es de 50% de las tareas para cada unidad.
+La distribucion de cargas se hace intercalando entre los núcleos, las instrucciones están divididas a la mitad (Core 1 lee de 0h a 0fffh, Core 2 de 1000h a 1fffh)
