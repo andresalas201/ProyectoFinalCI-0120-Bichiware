@@ -130,6 +130,10 @@
       <a name="facing" val="east"/>
       <a name="label" val="ER2"/>
     </comp>
+    <comp lib="0" loc="(2540,120)" name="Ground">
+      <a name="width" val="14"/>
+    </comp>
+    <comp lib="0" loc="(2540,440)" name="Ground"/>
     <comp lib="0" loc="(2540,510)" name="Tunnel">
       <a name="facing" val="east"/>
       <a name="label" val="Data1"/>
@@ -138,6 +142,9 @@
     <comp lib="0" loc="(2540,540)" name="Tunnel">
       <a name="facing" val="east"/>
       <a name="label" val="Data2"/>
+      <a name="width" val="32"/>
+    </comp>
+    <comp lib="0" loc="(2560,590)" name="Ground">
       <a name="width" val="32"/>
     </comp>
     <comp lib="0" loc="(2620,330)" name="Tunnel">
@@ -417,8 +424,20 @@
     <wire from="(2530,420)" to="(2560,420)"/>
     <wire from="(2530,60)" to="(2530,70)"/>
     <wire from="(2530,70)" to="(2570,70)"/>
+    <wire from="(2540,210)" to="(2540,240)"/>
+    <wire from="(2540,210)" to="(2570,210)"/>
+    <wire from="(2540,240)" to="(2540,380)"/>
+    <wire from="(2540,240)" to="(2570,240)"/>
+    <wire from="(2540,380)" to="(2540,430)"/>
+    <wire from="(2540,380)" to="(2570,380)"/>
+    <wire from="(2540,430)" to="(2540,440)"/>
+    <wire from="(2540,430)" to="(2570,430)"/>
     <wire from="(2540,510)" to="(2550,510)"/>
     <wire from="(2540,540)" to="(2550,540)"/>
+    <wire from="(2540,60)" to="(2540,90)"/>
+    <wire from="(2540,60)" to="(2570,60)"/>
+    <wire from="(2540,90)" to="(2540,120)"/>
+    <wire from="(2540,90)" to="(2570,90)"/>
     <wire from="(2550,510)" to="(2550,520)"/>
     <wire from="(2550,520)" to="(2570,520)"/>
     <wire from="(2550,530)" to="(2550,540)"/>
@@ -427,6 +446,12 @@
     <wire from="(2560,400)" to="(2570,400)"/>
     <wire from="(2560,410)" to="(2560,420)"/>
     <wire from="(2560,410)" to="(2570,410)"/>
+    <wire from="(2560,510)" to="(2560,540)"/>
+    <wire from="(2560,510)" to="(2570,510)"/>
+    <wire from="(2560,540)" to="(2560,590)"/>
+    <wire from="(2560,540)" to="(2570,540)"/>
+    <wire from="(2570,380)" to="(2570,390)"/>
+    <wire from="(2570,420)" to="(2570,430)"/>
     <wire from="(2590,100)" to="(2590,250)"/>
     <wire from="(2590,250)" to="(2590,280)"/>
     <wire from="(2590,280)" to="(2590,330)"/>
@@ -7066,13 +7091,6 @@ architecture Behavioral of cache_datos is
   end record;
   type cache_array is array (0 to CACHE_SIZE-1) of cache_block;
 
-  -- la cache se trata como una maquina de estados, estos son sus posibles estados:
-  -- idle: espera a que la cpu habilite una operacion
-  -- check_hit: revisa si hay hit
-  -- read_miss: lee un bloque desde la ram
-  -- write_back: escribe un bloque sucio en la ram antes de escribir
-  -- allocate: carga un bloque a cache
-  -- write_through: escribe en cache y en la ram
   type state_type is (IDLE, CHECK_HIT, READ_MISS, WRITE_BACK, ALLOCATE, WRITE_THROUGH);
 
   -- señales internas
@@ -7091,7 +7109,6 @@ architecture Behavioral of cache_datos is
   signal offset_int : integer range 0 to BLOCK_SIZE-1; -- indice para identificar la palabra dentro de ese bloque a acceder
 
   -- contador para operaciones de bloque
-  -- se extiende en 3 para dar tiempo a la última palabra (3 ciclos de retraso)
   signal word_counter : integer range 0 to BLOCK_SIZE + 3;
 
   signal read_data_buffer : word_array; -- buffer en donde se concatenan las 4 palabras de la ram para enviarlas a la cache
@@ -7130,7 +7147,7 @@ begin
                            current_block.tag = addr_tag) else '0';
   miss_detected &lt;= not hit_detected; -- hay miss en caso contrario
 
-  -- se activan algunas salidas
+  -- se activan algunas salidas usando solo asignaciones concurrentes
   cache_hit &lt;= hit_detected when current_state = CHECK_HIT else '0'; -- se retorna que hubo hit en caso de haberlo
   cache_miss &lt;= miss_detected when current_state = CHECK_HIT else '0'; -- se retorna miss en caso de haberlo
   busy &lt;= '1' when current_state /= IDLE else '0'; -- se detecta busy si el estado no es IDLE
@@ -7175,9 +7192,6 @@ begin
               else
                   next_state &lt;= IDLE;
               end if;
-          -- si el estado es CHECK_HIT pasa a WRITE_THOUGH si hay un hit y esta activada la señal de escritura en memoria y pasa a IDLE en caso contrario
-          -- para a WRITE_BACK si hay un miss y el bloque actual es valido y su dirty bit es 1, y pasa a read_MISS en caso contrario
-          -- en cualquier otro caso para a IDLE
           when CHECK_HIT =&gt;
               if hit_detected = '1' then
                   if cpu_write = '1' then
@@ -7194,31 +7208,26 @@ begin
               else
                   next_state &lt;= IDLE;
               end if;
-          -- si el estado actual es WRITE_BACK pasa a read_MISS si el contador de operaciones de bloque es mayor o igual al tamaño del bloque, y se mantiene en WRITE_BACK en caso contrario
           when WRITE_BACK =&gt;
               if word_counter &gt;= BLOCK_SIZE then
                   next_state &lt;= READ_MISS;
               else
                   next_state &lt;= WRITE_BACK;
               end if;
-          -- si el estado actual es READ_MISS pasa a ALLOCATE si el contador de operaciones de bloque es mayor o igual al tamaño del bloque + 2, y se mantiene en READ_MISS en caso contrario
           when READ_MISS =&gt;
               if word_counter &gt;= BLOCK_SIZE + 2 then
                   next_state &lt;= ALLOCATE;
               else
                   next_state &lt;= READ_MISS;
               end if;
-          -- si el estado actual es ALLOCATE pasa a WRITE_THROUGH si esta activada la señal de escritura en memoria, pasa a IDLE en caso contrario
           when ALLOCATE =&gt;
               if cpu_write = '1' then
                   next_state &lt;= WRITE_THROUGH;
               else
                   next_state &lt;= IDLE;
               end if;
-          -- de WRITE_THROUH se pasa a IDLE incondicionalemente
           when WRITE_THROUGH =&gt;
               next_state &lt;= IDLE;
-          -- el estado por defecto es IDLE
           when others =&gt;
               next_state &lt;= IDLE;
       end case;
@@ -7253,13 +7262,13 @@ begin
         
       elsif rising_edge(clk) then
         
-          -- Inicializar todas las salidas a 0 al inicio de cada ciclo
+          -- Establecer valores por defecto para evitar latches
           ram_write &lt;= '0';
           ram_read_internal &lt;= '0';
           data_valid_flag &lt;= '0';
           ram_address &lt;= (others =&gt; '0');
           ram_return_data &lt;= (others =&gt; '0');
-          cpu_return_data &lt;= (others =&gt; '0');
+          -- No resetear cpu_return_data aquí para mantener el valor
         
           case current_state is
                -- logica del estado IDLE
@@ -7388,7 +7397,7 @@ begin
               when others =&gt;
                   ram_address &lt;= (others =&gt; '0');
                   ram_return_data &lt;= (others =&gt; '0');
-                  cpu_return_data &lt;= (others =&gt; '0');
+                  -- No resetear cpu_return_data aquí
           end case;
       end if;
   end process;
