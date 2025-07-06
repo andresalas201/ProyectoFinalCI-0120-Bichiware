@@ -141,7 +141,7 @@ Si es un hit, devuelve el dato solicitado si esta activada la bandera de lectura
 En caso de Miss, pasa a READ_MISS donde se leen los datos desde memoria. Una vez leidos todos los bloques se pasa a ALLOCATE, que basicamente guarda la informacion en los arreglos internos.
 
 
-Esta caché escribe los datos en ella con 2 ciclos de retraso a su petición a la RAM, en otras palabras existe una latencia de 2 ciclos entre RAM y cache.
+Esta caché escribe los datos en ella con 3 ciclos de retraso a su petición a la RAM, en otras palabras existe una latencia de 3 ciclos entre RAM y cache.
 
 
 ## Componente cache_datos
@@ -183,23 +183,3 @@ Esta caché escribe los datos en ella con 3 ciclos de retraso a su petición a l
 Este componente se asegura de que los 2 cores accedan a puntos diferentes de la memoria ram, esto lo logra recibiendo como input el address de memoria que sale de cada core, al entrar simplemente se altera su bit 12, el core 1 tiene un 0 y el core 2 un 1, de esta manera se subdividen las direcciones en 2, evitando completamente que un core acceda a la memoria de otro, tanto instrucciones como datos.
 
 Este cambio es el equivalente del circuito del cambio entre direcciones virtuales y fisicas, en este caso el unico cambio importante ocurre para el core 2, por ejemplo: Si el core 2 pide leer la posicion de memoria 0, en realidad se leera la posicion 1000h, esto debido a la conversión generada por address_balancer
-
-
-
-# Análisis de costo del programa
-El programa analizado es el resultante de cargar en la RAM los datos "instruccionesPrueba"
-
-
-## IC
-
-
-Este programa tiene un total de 22 instrucciones.
-
-## CPU Time
-
-
-
-## Analisis de distribucion de carga
-
-
-La distribucion de cargas se hace intercalando entre los núcleos, las instrucciones están divididas a la mitad (Core 1 lee de 0h a 0fffh, Core 2 de 1000h a 1fffh)
