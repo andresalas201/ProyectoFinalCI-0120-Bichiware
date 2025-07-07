@@ -1,3 +1,12 @@
+Felipe Bianchini C21178
+
+Henry Campos C21636
+
+Jose Mario Castro  C21878
+
+Andre Salas C27058
+
+
 # Formato de instrucciones
 
 ![alt text](inst2.png)
@@ -112,7 +121,7 @@ Se calcula el nuevo pc sumandole al pc actual el offset completo recien calculad
 ## Componente cache_instrucciones
 
 
-Este componente simula una cache de instrucciones de mapeo directo con bloques de 8 palabras y 16 bloques, no contempla escrituras pues es un cache de instrucciones, es solo de lectura y en caso de miss de lectura hace allocate de los bloques faltantes. Las direcciones del circuito son de 14 bits, por conceso de grupo y limitaciones de logisim, por esto se dividen para la cache de la siguiente manera: tag de 7 bits, un índice de 4 bits y un offset de 3 bits.
+Este componente simula una cache de instrucciones de mapeo directo con bloques de 8 palabras y 16 bloques, no contempla escrituras pues es un cache de instrucciones, es solo de lectura y en caso de miss de lectura hace allocate de los bloques faltantes. Las direcciones del circuito son de 14 bits, por consenso de grupo y limitaciones de logisim, por esto se dividen para la cache de la siguiente manera: tag de 7 bits, un índice de 4 bits y un offset de 3 bits.
 
 Funciona como una máquina de estados con los siguientes estados posibles:
 
@@ -147,7 +156,7 @@ Esta caché escribe los datos en ella con 3 ciclos de retraso a su petición a l
 ## Componente cache_datos
 
 
-Este componente simula una cache de datos de mapeo directo con bloques de 4 palabras y 32 bloques, con las politicas Write Through y Write Allocate (con la intención de que fuera más fácil visualizar lo que ocurre en el flujo del circuito). Las direcciones del circuito son de 14 bits, por conceso de grupo y limitaciones de logisim, por esto se dividen para la cache de la siguiente manera: tag de 7 bits, un índice de 5 bits y un offset de 2 bits.
+Este componente simula una cache de datos de mapeo directo con bloques de 4 palabras y 32 bloques, con las politicas Write Through y Write Allocate (con la intención de que fuera más fácil visualizar lo que ocurre en el flujo del circuito). Las direcciones del circuito son de 14 bits, por consenso de grupo y limitaciones de logisim, por esto se dividen para la cache de la siguiente manera: tag de 7 bits, un índice de 5 bits y un offset de 2 bits.
 
 Funciona como una máquina de estados con los siguientes estados posibles:
     
