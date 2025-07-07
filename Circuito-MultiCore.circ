@@ -1206,7 +1206,7 @@
       <a name="bit7" val="none"/>
       <a name="bit8" val="none"/>
       <a name="bit9" val="none"/>
-      <a name="facing" val="south"/>
+      <a name="facing" val="north"/>
       <a name="fanout" val="1"/>
       <a name="incoming" val="14"/>
     </comp>
@@ -1225,7 +1225,7 @@
       <a name="bit7" val="none"/>
       <a name="bit8" val="none"/>
       <a name="bit9" val="none"/>
-      <a name="facing" val="north"/>
+      <a name="facing" val="south"/>
       <a name="fanout" val="1"/>
       <a name="incoming" val="14"/>
     </comp>
@@ -7055,6 +7055,7 @@ ARCHITECTURE TypeArchitecture OF Translator IS&#13;
             	-- 	LUI
               	
                	TranslatedC &lt;= "10010"; 
+              
              	
         	WHEN "0010111" =&gt; -- U-Type 2
            	-- 	AUIPC
@@ -7063,9 +7064,10 @@ ARCHITECTURE TypeArchitecture OF Translator IS&#13;
               	
  
         	WHEN "1110011" =&gt; -- I-Type 2
+        		
 			-- 	ECALL
               	
-               TranslatedC &lt;= "10100"; 
+               	TranslatedC &lt;= "10100"; 
               	
         	WHEN "0000011" =&gt; -- Load
            	IF funct3 = "010" THEN -- sw
